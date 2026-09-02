@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  name      String?
+  roleId    Int
+  role      Role      @relation(fields: [roleId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Role {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique // e.g., "Super Admin", "Manager", "Leader", "Employee", "Intern"
+  description String?
+  users       User[]
+  permissions Permission[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+}
+
+model Module {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique // e.g., "Social", "CRM", "Recruiting", "Training"
+  description String?
+  permissions Permission[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+}
+
+model Permission {
+  id        Int       @id @default(autoincrement())
+  roleId    Int
+  moduleId  Int
+  action    String    // "CREATE", "READ", "UPDATE", "DELETE", "APPROVE"
+  role      Role      @relation(fields: [roleId], references: [id])
+  module    Module    @relation(fields: [moduleId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([roleId, moduleId, action])
+}

@@ -1,0 +1,25 @@
+# Monorepo / Global Ignores
+.agents/
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# Frontend (Next.js)
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/node_modules/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Backend (NestJS)
+backend/dist/
+backend/node_modules/
+backend/.env
+backend/.env.test
+backend/.env.production
+backend/coverage/
