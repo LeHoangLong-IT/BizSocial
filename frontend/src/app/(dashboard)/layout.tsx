@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { Layout, Menu, Typography, Dropdown, Avatar, Button, Space, Badge } from 'antd';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Layout, Menu, Typography, Dropdown, Avatar, Button, Space, Badge, message, Spin } from 'antd';
 import {
   DashboardOutlined,
   AppstoreOutlined,
@@ -17,6 +17,9 @@ import {
   UserOutlined,
   SafetyCertificateOutlined,
   TeamOutlined,
+  BranchesOutlined,
+  FolderOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
@@ -24,19 +27,87 @@ import { useAuthStore } from '@/store/authStore';
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
 
+// Ánh xạ giữa Route URL và tên Module nghiệp vụ tương ứng
+const ROUTE_MODULE_MAP: Record<string, string> = {
+  '/users': 'User',
+  '/roles': 'Role',
+  '/organization': 'Department',
+  '/crm': 'CRM',
+  '/social': 'Social',
+  '/recruiting': 'Recruiting',
+  '/training': 'Training',
+};
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout } = useAuthStore();
+  const { user, logout, canReadModule } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  // Phục hồi session tức thì từ localStorage khi F5 / Refresh trang
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !user) {
+      try {
+        const token = localStorage.getItem('access_token');
+        const storedUser = localStorage.getItem('user');
+        const storedPerms = localStorage.getItem('permissions');
+        if (token && storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          const parsedPerms = storedPerms ? JSON.parse(storedPerms) : [];
+          useAuthStore.getState().login(parsedUser, parsedPerms, token);
+        }
+      } catch (e) {
+        console.error('Lỗi phục hồi session:', e);
+      }
+    }
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    if (!user) {
+    if (!mounted) return;
+
+    // Kiểm tra xem trình duyệt có lưu access_token hay không
+    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('access_token');
+
+    // Chỉ chuyển hướng về /login khi THỰC SỰ không có phiên đăng nhập nào được lưu
+    if (!user && !hasToken) {
       router.push('/login');
+      return;
     }
-  }, [user, router]);
+
+    if (user) {
+      // Route Guard: Kiểm tra nếu user cố truy cập vào URL mà không có quyền READ
+      const requiredModule = ROUTE_MODULE_MAP[pathname];
+      if (requiredModule && !canReadModule(requiredModule)) {
+        message.error('Bạn không có quyền thao tác với chức năng này!');
+        router.replace('/');
+      }
+    }
+  }, [user, mounted, pathname, router, canReadModule]);
+
+  // Trong lúc đang phục hồi session từ localStorage
+  if (!mounted || (!user && typeof window !== 'undefined' && !!localStorage.getItem('access_token'))) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   if (!user) {
     return null;
+  }
+
+  // Nếu đang truy cập trang không có quyền, chặn hiển thị và đợi redirect
+  const requiredModule = ROUTE_MODULE_MAP[pathname];
+  const isUnauthorized = requiredModule && !canReadModule(requiredModule);
+  if (isUnauthorized) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-3">
+        <Spin size="large" />
+        <p className="text-sm text-slate-500 font-medium">Bạn không có quyền thao tác với chức năng này. Đang chuyển về Dashboard...</p>
+      </div>
+    );
   }
 
   const handleLogout = () => {
@@ -45,38 +116,55 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push('/login');
   };
 
-  const menuItems = [
+  /* ==========================================================================
+     MẪU MENU TREE (ĐA CẤP / CÂY MENU CON) - LƯU LẠI ĐỂ SỬ DỤNG KHI CẦN:
+     --------------------------------------------------------------------------
+     {
+       key: 'dashboard-sub',
+       icon: <DashboardOutlined />,
+       label: 'Dashboard',
+       children: [
+         { key: '/', label: 'HRM Dashboard' },
+         { key: '/inventory', label: 'Inventory Dashboard' },
+         canReadModule('CRM') ? { key: '/crm', label: 'CRM Dashboard' } : null,
+       ].filter(Boolean),
+     },
+     ========================================================================== */
+
+  // Lọc Menu Sidebar theo quyền READ chuẩn quốc tế
+  const filteredMenuItems = [
     {
       key: 'main-group',
       label: <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2">Main</span>,
       type: 'group' as const,
       children: [
         {
-          key: 'dashboard-sub',
+          key: '/',
           icon: <DashboardOutlined />,
           label: 'Dashboard',
-          children: [
-            { key: '/', label: 'HRM Dashboard' },
-            { key: '/inventory', label: 'Inventory Dashboard' },
-            { key: '/crm', label: 'CRM Dashboard' },
-          ]
         },
-        {
-          key: '/users',
-          icon: <UserOutlined />,
-          label: 'Quản lý User',
-        },
-        {
-          key: '/roles',
-          icon: <SafetyCertificateOutlined />,
-          label: 'Ma trận Phân quyền',
-        },
-        {
-          key: '/organization',
-          icon: <TeamOutlined />,
-          label: 'Cơ cấu Tổ chức',
-        },
-      ]
+        canReadModule('User')
+          ? {
+              key: '/users',
+              icon: <UserOutlined />,
+              label: 'Quản lý User',
+            }
+          : null,
+        canReadModule('Role')
+          ? {
+              key: '/roles',
+              icon: <SafetyCertificateOutlined />,
+              label: 'Quản lý Phân quyền',
+            }
+          : null,
+        canReadModule('Department')
+          ? {
+              key: '/organization',
+              icon: <TeamOutlined />,
+              label: 'Cơ cấu Tổ chức',
+            }
+          : null,
+      ].filter(Boolean),
     },
     {
       key: 'inventory-group',
@@ -87,8 +175,42 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { key: '/categories', icon: <AppstoreOutlined />, label: 'Categories' },
         { key: '/brands', icon: <TagOutlined />, label: 'Brands' },
         { key: '/units', icon: <ShoppingCartOutlined />, label: 'Units' },
-      ]
-    }
+      ],
+    },
+    {
+      key: 'template-tree-group',
+      label: <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2 mt-4 inline-block">Mẫu Menu Tree</span>,
+      type: 'group' as const,
+      children: [
+        {
+          key: 'level-1-tree',
+          icon: <BranchesOutlined />,
+          label: 'Level 1 (Menu Gốc)',
+          children: [
+            {
+              key: 'level-2-1',
+              icon: <FileTextOutlined />,
+              label: 'Level 2.1 (Mục con)',
+            },
+            {
+              key: 'level-2-2',
+              icon: <FolderOutlined />,
+              label: 'Level 2.2 (Nhánh con)',
+              children: [
+                {
+                  key: 'level-3-1',
+                  label: 'Level 3.1 (Chi tiết A)',
+                },
+                {
+                  key: 'level-3-2',
+                  label: 'Level 3.2 (Chi tiết B)',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
   ];
 
   const userMenu = {
@@ -135,10 +257,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         <Menu
           mode="inline"
-          defaultOpenKeys={['dashboard-sub']}
           selectedKeys={[pathname]}
-          items={menuItems}
-          onClick={({ key }) => router.push(key)}
+          items={filteredMenuItems as any}
+          onClick={({ key }) => {
+            if (key.startsWith('/')) {
+              router.push(key);
+            } else {
+              message.info(`Menu mẫu: ${key} (Sẵn sàng gắn route khi lên plan)`);
+            }
+          }}
           className="border-r-0 pt-4 custom-sidebar-menu px-3"
         />
       </Sider>

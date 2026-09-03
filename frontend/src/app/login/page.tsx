@@ -24,11 +24,11 @@ export default function LoginPage() {
       });
       const { user, permissions, access_token } = res.data;
 
-      // Lưu vào Zustand
+      // Lưu vào Zustand và localStorage
       loginStore(user, permissions, access_token);
-
-      // Lưu localStorage để giữ session
       localStorage.setItem('access_token', access_token);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('permissions', JSON.stringify(permissions));
 
       message.success('Đăng nhập thành công!');
 

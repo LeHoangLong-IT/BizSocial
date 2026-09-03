@@ -38,11 +38,27 @@ export class AuthService {
       }
     });
 
-    const permissions = rawPermissions.map(p => ({
+    let permissions = rawPermissions.map(p => ({
       moduleId: p.moduleId,
       moduleName: p.module.name,
       action: p.action,
     }));
+
+    // Super Admin có tất cả quyền trên mọi modules
+    if (user.role?.name === 'Super Admin') {
+      const allModules = await prisma.module.findMany({ where: { deletedAt: null } });
+      const actions = ['CREATE', 'READ', 'UPDATE', 'DELETE', 'APPROVE'];
+      permissions = [];
+      allModules.forEach(m => {
+        actions.forEach(a => {
+          permissions.push({
+            moduleId: m.id,
+            moduleName: m.name,
+            action: a,
+          });
+        });
+      });
+    }
 
     const payload = { sub: user.id, email: user.email, roleId: user.roleId };
     return {
@@ -52,6 +68,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         roleId: user.roleId,
+        roleName: user.role?.name || '',
         departmentId: user.departmentId,
         teamId: user.teamId,
       },
