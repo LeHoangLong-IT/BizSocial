@@ -8,15 +8,21 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  password  String
-  name      String?
-  roleId    Int
-  role      Role      @relation(fields: [roleId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id           Int         @id @default(autoincrement())
+  email        String      @unique
+  password     String
+  name         String?
+  phone        String?
+  roleId       Int
+  role         Role        @relation(fields: [roleId], references: [id])
+  departmentId Int?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  teamId       Int?
+  team         Team?       @relation(fields: [teamId], references: [id])
+  permissions  Permission[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
 }
 
 model Role {
@@ -42,14 +48,39 @@ model Module {
 
 model Permission {
   id        Int       @id @default(autoincrement())
-  roleId    Int
+  roleId    Int?
+  userId    Int?
   moduleId  Int
   action    String    // "CREATE", "READ", "UPDATE", "DELETE", "APPROVE"
-  role      Role      @relation(fields: [roleId], references: [id])
+  role      Role?     @relation(fields: [roleId], references: [id])
+  user      User?     @relation(fields: [userId], references: [id])
   module    Module    @relation(fields: [moduleId], references: [id])
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  @@unique([roleId, moduleId, action])
+  @@unique([roleId, userId, moduleId, action])
+}
+
+model Department {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  teams       Team[]
+  users       User[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+}
+
+model Team {
+  id           Int         @id @default(autoincrement())
+  name         String      @unique
+  description  String?
+  departmentId Int
+  department   Department  @relation(fields: [departmentId], references: [id])
+  users        User[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
 }

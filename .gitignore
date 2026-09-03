@@ -23,3 +23,4 @@ backend/.env
 backend/.env.test
 backend/.env.production
 backend/coverage/
+*.tsbuildinfo

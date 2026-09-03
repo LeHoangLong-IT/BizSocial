@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { REQUIRE_PERMISSION_KEY } from './require-permission.decorator';
+import { REQUIRE_PERMISSION_KEY } from './require-permission.decorator.js';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -36,6 +36,14 @@ export class PermissionsGuard implements CanActivate {
 
     const { module, action } = requiredPermission;
 
+    // Check if user is Super Admin
+    const roleRecord = await prisma.role.findUnique({
+      where: { id: user.roleId },
+    });
+    if (roleRecord?.name === 'Super Admin') {
+      return true;
+    }
+
     const moduleRecord = await prisma.module.findUnique({
       where: { name: module },
     });
@@ -46,9 +54,12 @@ export class PermissionsGuard implements CanActivate {
 
     const hasPermission = await prisma.permission.findFirst({
       where: {
-        roleId: user.roleId,
         moduleId: moduleRecord.id,
         action: action,
+        OR: [
+          { roleId: user.roleId },
+          { userId: user.id },
+        ],
       },
     });
 

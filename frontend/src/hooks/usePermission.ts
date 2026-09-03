@@ -1,28 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useAuthStore } from '@/store/authStore';
 
-// Giả lập lấy permissions từ localStorage sau khi login (Phase 1)
-export const usePermission = (moduleName: string, action: string) => {
-  const [hasPermission, setHasPermission] = useState<boolean>(false);
+export function usePermission(moduleName: string, action: string) {
+  // Thực tế, moduleId sẽ cần được map từ moduleName.
+  // Ở mức đơn giản nhất, ta có thể assume Backend gửi về kèm moduleName 
+  // HOẶC ta map hardcode ở Frontend. Để chính xác, Zustand nên lưu permission kèm moduleName.
+  
+  // Tạm thời để code gọn, ta giả định backend đã trả về `moduleName` trong permission:
+  // (Cần cập nhật Backend để return moduleName trong Auth API)
+  const permissions = useAuthStore((state) => state.permissions);
+  
+  const hasAccess = permissions.some(
+    (p: any) => p.moduleName === moduleName && p.action === action
+  );
 
-  useEffect(() => {
-    // Lấy thông tin user/permissions từ local storage hoặc state management
-    const storedPermissions = localStorage.getItem('permissions');
-    
-    if (storedPermissions) {
-      try {
-        const permissions: Array<{ module: string; action: string }> = JSON.parse(storedPermissions);
-        
-        const isGranted = permissions.some(
-          (p) => p.module === moduleName && p.action === action
-        );
-        
-        setHasPermission(isGranted);
-      } catch (error) {
-        console.error("Failed to parse permissions", error);
-        setHasPermission(false);
-      }
-    }
-  }, [moduleName, action]);
-
-  return hasPermission;
-};
+  return hasAccess;
+}

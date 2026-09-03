@@ -18,7 +18,7 @@ async function main() {
   }
 
   // 2. Tạo các Module
-  const modulesData = ['Social', 'CRM', 'Recruiting', 'Training'];
+  const modulesData = ['Social', 'CRM', 'Recruiting', 'Training', 'User', 'Role', 'Department'];
   const createdModules = {};
   for (const modName of modulesData) {
     createdModules[modName] = await prisma.module.upsert({
@@ -35,21 +35,24 @@ async function main() {
     const mod = createdModules[modName];
     for (const action of actions) {
       // Upsert permission
-      await prisma.permission.upsert({
+      // Seed permission logic manually to avoid null unique issues
+      const exists = await prisma.permission.findFirst({
         where: {
-          roleId_moduleId_action: {
-            roleId: managerRole.id,
-            moduleId: mod.id,
-            action: action,
-          },
-        },
-        update: {},
-        create: {
           roleId: managerRole.id,
           moduleId: mod.id,
           action: action,
         },
       });
+
+      if (!exists) {
+        await prisma.permission.create({
+          data: {
+            roleId: managerRole.id,
+            moduleId: mod.id,
+            action: action,
+          },
+        });
+      }
     }
   }
 

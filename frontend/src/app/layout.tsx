@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, App as AntdApp } from 'antd';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "BizSocial ERP",
-  description: "Quản lý Social Media tích hợp ERP",
+  description: "Next Generation ERP for Social Media Management",
 };
 
 export default function RootLayout({
@@ -17,8 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
-      <body className={`${inter.className} antialiased`}>
+    <html lang="en">
+      <body className={inter.className}>
         <AntdRegistry>
           <ConfigProvider
             theme={{
@@ -28,7 +28,9 @@ export default function RootLayout({
               },
             }}
           >
-            {children}
+            <AntdApp>
+              {children}
+            </AntdApp>
           </ConfigProvider>
         </AntdRegistry>
       </body>
