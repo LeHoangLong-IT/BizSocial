@@ -309,7 +309,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </Header>
 
-        <Content className="overflow-auto py-2" style={{ minHeight: 'calc(100vh - 112px)' }}>
+        <Content className="overflow-y-auto overflow-x-hidden py-2" style={{ minHeight: 'calc(100vh - 112px)' }}>
           {children}
         </Content>
       </Layout>

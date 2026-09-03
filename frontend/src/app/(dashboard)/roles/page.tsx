@@ -14,7 +14,7 @@ import {
   Typography,
   Badge,
   Spin,
-  message,
+  App,
   Row,
   Col,
   Statistic,
@@ -186,6 +186,7 @@ interface PermissionItem {
 
 export default function RolesMatrixPage() {
   const router = useRouter();
+  const { message } = App.useApp();
   const { token } = useAuthStore();
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);

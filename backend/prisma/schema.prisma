@@ -16,12 +16,15 @@ model User {
   roleId       Int
   role         Role        @relation(fields: [roleId], references: [id])
   departmentId Int?
-  department   Department? @relation(fields: [departmentId], references: [id])
+  department   Department?  @relation("DepartmentMembers", fields: [departmentId], references: [id])
   teamId       Int?
-  team         Team?       @relation(fields: [teamId], references: [id])
+  team         Team?        @relation("TeamMembers", fields: [teamId], references: [id])
+  managedDepts Department[] @relation("DepartmentManager")
+  ledTeams     Team[]                  @relation("TeamLeader")
   permissions  Permission[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  transferLogs DepartmentTransferLog[] @relation("UserTransferLogs")
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime     @updatedAt
   deletedAt    DateTime?
 }
 
@@ -66,8 +69,10 @@ model Department {
   id          Int       @id @default(autoincrement())
   name        String    @unique
   description String?
+  managerId   Int?
+  manager     User?     @relation("DepartmentManager", fields: [managerId], references: [id])
   teams       Team[]
-  users       User[]
+  users       User[]    @relation("DepartmentMembers")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
@@ -79,8 +84,29 @@ model Team {
   description  String?
   departmentId Int
   department   Department  @relation(fields: [departmentId], references: [id])
-  users        User[]
+  leaderId     Int?
+  leader       User?       @relation("TeamLeader", fields: [leaderId], references: [id])
+  users        User[]      @relation("TeamMembers")
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   deletedAt    DateTime?
 }
+
+model DepartmentTransferLog {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation("UserTransferLogs", fields: [userId], references: [id])
+  fromDeptId    Int?
+  fromDeptName  String?
+  toDeptId      Int?
+  toDeptName    String?
+  fromTeamId    Int?
+  fromTeamName  String?
+  toTeamId      Int?
+  toTeamName    String?
+  reason        String?  @db.Text
+  changedById   Int?
+  changedByName String?
+  createdAt     DateTime @default(now())
+}
+
