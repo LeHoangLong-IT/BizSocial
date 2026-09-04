@@ -25,6 +25,7 @@ import {
   Popover,
   Badge,
   Pagination,
+  Drawer,
   App
 } from 'antd';
 import {
@@ -92,11 +93,26 @@ export default function UserManagementPage() {
   const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [dateRange, setDateRange] = useState<any>(null);
 
   // Grid pagination
   const [gridPage, setGridPage] = useState<number>(1);
   const [gridPageSize, setGridPageSize] = useState<number>(8);
+
+  // Responsive mobile view mode locking
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const activeViewMode = isMobile ? 'grid' : viewMode;
 
   const { token } = useAuthStore();
 
@@ -334,13 +350,16 @@ export default function UserManagementPage() {
   // Active filter count
   const activeFilterCount = (filterRole !== 'all' ? 1 : 0) +
     (filterDepartment !== 'all' ? 1 : 0) +
-    (filterStatus !== 'all' ? 1 : 0);
+    (filterStatus !== 'all' ? 1 : 0) +
+    (dateRange && dateRange[0] ? 1 : 0);
 
   const resetFilters = () => {
     setFilterRole('all');
     setFilterDepartment('all');
     setFilterStatus('all');
+    setDateRange(null);
     setFilterOpen(false);
+    setMobileFilterOpen(false);
   };
 
   const sortMenuItems = [
@@ -593,7 +612,7 @@ export default function UserManagementPage() {
 
   // Filter Popover Content
   const filterPopoverContent = (
-    <div className="w-72 p-2 flex flex-col gap-3">
+    <div className="w-72 sm:w-80 p-2.5 flex flex-col gap-3">
       <div className="flex justify-between items-center pb-2 border-b border-gray-100">
         <span className="font-semibold text-slate-800 text-sm">Bộ lọc nâng cao</span>
         {activeFilterCount > 0 && (
@@ -604,9 +623,20 @@ export default function UserManagementPage() {
             onClick={resetFilters}
             className="text-xs p-0 text-gray-400 hover:text-red-500"
           >
-            Đặt lại
+            Đặt lại ({activeFilterCount})
           </Button>
         )}
+      </div>
+
+      <div>
+        <label className="text-xs font-medium text-gray-500 mb-1 block">Khoảng thời gian (Ngày tạo)</label>
+        <RangePicker
+          className="w-full text-xs rounded-md"
+          format="DD/MM/YYYY"
+          placeholder={['Từ ngày', 'Đến ngày']}
+          value={dateRange}
+          onChange={(dates) => setDateRange(dates)}
+        />
       </div>
 
       <div>
@@ -665,39 +695,85 @@ export default function UserManagementPage() {
 
   return (
     <div className="flex flex-col gap-4 print:p-0">
-      {/* Header Actions */}
-      <div className="flex justify-between items-center mb-2 print:hidden">
-        <Title level={3} className="!mb-0 font-semibold text-gray-800">Quản lý User</Title>
-        <Space size="small">
+      {/* Header Section - Grid / Responsive Layout matching screenshot */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start sm:items-center mb-1 print:hidden">
+        <div>
+          <Title level={3} className="!mb-0 font-bold text-slate-800 tracking-tight text-xl sm:text-2xl">
+            Quản lý User
+          </Title>
+        </div>
+
+        {/* Action Controls Row */}
+        <div className="flex items-center gap-2 flex-wrap sm:justify-end w-full sm:w-auto">
+          {/* View Mode Switcher Segmented Button (Hidden on Mobile, Locked to Grid) */}
+          <div className="hidden sm:flex bg-slate-100 p-1 rounded-lg items-center gap-1 border border-slate-200/60 shadow-xs">
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${viewMode === 'table'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                }`}
+              title="Dạng danh sách"
+            >
+              <UnorderedListOutlined className="text-sm" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${viewMode === 'grid'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                }`}
+              title="Dạng lưới (Grid)"
+            >
+              <AppstoreOutlined className="text-sm" />
+            </button>
+          </div>
+
           <Button
             icon={<PrinterOutlined />}
             onClick={handlePrint}
-            className="text-gray-600 font-medium h-8 px-3 shadow-none border-gray-200 hover:text-blue-600"
+            className="text-slate-700 font-medium text-xs h-8 px-3 rounded-lg border-slate-200 hover:text-teal-600 shadow-none"
           >
             In
           </Button>
-          <Button
-            icon={<FileExcelOutlined className="text-emerald-600" />}
-            onClick={handleExportExcel}
-            className="text-gray-600 font-medium h-8 px-3 shadow-none border-gray-200 hover:!border-emerald-500 hover:!text-emerald-600"
+
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'excel',
+                  icon: <FileExcelOutlined className="text-emerald-600" />,
+                  label: 'Xuất file Excel (.xlsx)',
+                  onClick: handleExportExcel,
+                },
+              ],
+            }}
+            trigger={['click']}
           >
-            Xuất Excel
-          </Button>
+            <Button
+              className="text-slate-700 font-medium text-xs h-8 px-3 rounded-lg border-slate-200 shadow-none flex items-center gap-1"
+            >
+              <DownloadOutlined className="text-xs text-slate-500" />
+              <span>Xuất file</span>
+              <DownOutlined className="text-[9px] text-slate-400" />
+            </Button>
+          </Dropdown>
+
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            className="bg-[#1e293b] hover:bg-slate-700 border-0 font-medium"
+            className="bg-slate-900 hover:bg-slate-800 border-0 font-medium text-xs h-8 px-3.5 rounded-lg shadow-xs"
             onClick={() => handleOpenModal('add')}
           >
-            Thêm mới
+            Thêm User
           </Button>
-        </Space>
+        </div>
       </div>
 
       {/* Bảng báo cáo in ấn chuyên dụng (Chỉ hiển thị khi in) */}
       <div className="hidden print:block w-full print-only-view">
-
-
         <div className="border-b-2 border-slate-900 pb-3 mb-5">
           <div className='text-center'>
             <h1 className="text-xl font-bold text-slate-900 uppercase tracking-wide m-0">
@@ -786,95 +862,166 @@ export default function UserManagementPage() {
       {/* Main Card Wrapper (Chỉ hiển thị khi xem trên Web) */}
       <Card variant="borderless" className="shadow-sm rounded-xl overflow-hidden border border-gray-100 web-only-view" styles={{ body: { padding: 0 } }}>
 
-        {/* Toolbar (Hidden on Print) */}
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white flex-wrap gap-4 print:hidden">
-          <Space size="middle" className="flex-wrap">
+        {/* Filter & Search Toolbar */}
+        <div className="p-3 sm:p-4 border-b border-slate-100 bg-white gap-3 print:hidden">
+          {/* Desktop Filter Layout */}
+          <div className="hidden sm:flex flex-row justify-between items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              <Input
+                placeholder="Tìm kiếm..."
+                prefix={<SearchOutlined className="text-slate-400" />}
+                className="w-64 rounded-lg text-xs"
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
+                allowClear
+              />
+              <RangePicker
+                className="rounded-lg text-xs"
+                format="DD/MM/YYYY"
+                placeholder={['Từ ngày', 'Đến ngày']}
+                value={dateRange}
+                onChange={(dates) => setDateRange(dates)}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Popover
+                content={filterPopoverContent}
+                trigger="click"
+                open={filterOpen}
+                onOpenChange={setFilterOpen}
+                placement="bottomRight"
+              >
+                <Badge count={activeFilterCount} offset={[-4, 4]} size="small">
+                  <Button
+                    icon={<FilterOutlined />}
+                    className={`rounded-lg text-xs font-medium h-8 ${activeFilterCount > 0 ? '!border-teal-600 !text-teal-700' : 'text-slate-600 border-slate-200'}`}
+                  >
+                    Bộ lọc
+                  </Button>
+                </Badge>
+              </Popover>
+
+              <Dropdown menu={{ items: sortMenuItems }} trigger={['click']} placement="bottomLeft">
+                <Button
+                  className="!bg-teal-700 hover:!bg-teal-800 !text-white !border-0 text-xs font-medium h-8 px-3 flex items-center gap-1.5 rounded-lg shadow-xs"
+                >
+                  <SortAscendingOutlined className="text-xs" />
+                  <span>Sắp xếp</span>
+                  <DownOutlined className="text-[9px] opacity-80" />
+                </Button>
+              </Dropdown>
+
+              <Tooltip title="Làm mới">
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={fetchUsers}
+                  loading={loading}
+                  className="text-slate-500 rounded-lg h-8 w-8 p-0 flex items-center justify-center border-slate-200"
+                />
+              </Tooltip>
+            </div>
+          </div>
+
+          {/* Mobile Optimized Filter Layout */}
+          <div className="flex sm:hidden flex-col gap-2.5">
+            {/* Row 1: Search Bar Full Width */}
             <Input
-              placeholder="Tìm kiếm..."
-              prefix={<SearchOutlined className="text-gray-400" />}
-              className="w-64 rounded-md"
+              placeholder="Tìm kiếm người dùng..."
+              prefix={<SearchOutlined className="text-slate-400" />}
+              className="w-full rounded-xl text-xs h-9 bg-slate-50/80 border-slate-200"
               value={searchText}
               onChange={e => setSearchText(e.target.value)}
               allowClear
             />
+
+            {/* Row 2: Date Range Picker Full Width */}
             <RangePicker
-              className="rounded-md"
+              className="w-full rounded-xl text-xs h-9 bg-white border-slate-200"
               format="DD/MM/YYYY"
               placeholder={['Từ ngày', 'Đến ngày']}
               value={dateRange}
               onChange={(dates) => setDateRange(dates)}
             />
-          </Space>
 
-          <Space size="small" className="flex-wrap">
-            <Popover
-              content={filterPopoverContent}
-              trigger="click"
-              open={filterOpen}
-              onOpenChange={setFilterOpen}
-              placement="bottomRight"
-            >
-              <Badge count={activeFilterCount} offset={[-4, 4]} size="small">
-                <Button
-                  icon={<FilterOutlined />}
-                  className={activeFilterCount > 0 ? '!border-teal-600 !text-teal-700 font-medium' : 'text-gray-600'}
-                >
-                  Lọc
-                </Button>
-              </Badge>
-            </Popover>
-
-            <Dropdown menu={{ items: sortMenuItems }} trigger={['click']} placement="bottomLeft">
-              <Button
-                className="!bg-[#0f766e] hover:!bg-[#115e59] !text-white !border-0 font-medium flex items-center gap-1.5 shadow-xs rounded-md"
+            {/* Row 3: Action Bar (Filter, Sort, Refresh) */}
+            <div className="grid grid-cols-3 gap-2 w-full">
+              {/* Mobile Filter Button (Triggers Popover Dropdown like Desktop) */}
+              <Popover
+                content={filterPopoverContent}
+                trigger="click"
+                open={filterOpen}
+                onOpenChange={setFilterOpen}
+                placement="bottomLeft"
               >
-                <SortAscendingOutlined className="text-sm" />
-                <span>Sắp xếp</span>
-                <DownOutlined className="text-[10px] ml-0.5 opacity-80" />
-              </Button>
-            </Dropdown>
+                <button
+                  type="button"
+                  className={`w-full rounded-xl text-xs font-medium h-9 flex items-center justify-center gap-1.5 transition-all border ${
+                    activeFilterCount > 0
+                      ? 'border-teal-600 text-teal-700 bg-teal-50 font-semibold'
+                      : 'text-slate-700 border-slate-200 bg-white hover:bg-slate-50'
+                  }`}
+                >
+                  <FilterOutlined className="text-xs" />
+                  <span>Bộ lọc</span>
+                  {activeFilterCount > 0 && (
+                    <span className="bg-teal-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+              </Popover>
 
-            <Tooltip title="Dạng bảng">
-              <Button
-                icon={<UnorderedListOutlined />}
-                className={viewMode === 'table' ? '!bg-slate-800 !text-white !border-slate-800 shadow-xs' : 'text-gray-500'}
-                onClick={() => setViewMode('table')}
-              />
-            </Tooltip>
-            <Tooltip title="Dạng lưới">
-              <Button
-                icon={<AppstoreOutlined />}
-                className={viewMode === 'grid' ? '!bg-slate-800 !text-white !border-slate-800 shadow-xs' : 'text-gray-500'}
-                onClick={() => setViewMode('grid')}
-              />
-            </Tooltip>
-            <Tooltip title="Làm mới">
-              <Button icon={<ReloadOutlined />} onClick={fetchUsers} loading={loading} className="text-gray-400" />
-            </Tooltip>
-          </Space>
+              {/* Sort Dropdown */}
+              <Dropdown menu={{ items: sortMenuItems }} trigger={['click']} placement="bottom">
+                <button
+                  type="button"
+                  className="w-full bg-teal-700 hover:bg-teal-800 text-white border-0 text-xs font-medium h-9 flex items-center justify-center gap-1 rounded-xl shadow-xs transition-all"
+                >
+                  <SortAscendingOutlined className="text-xs" />
+                  <span>Sắp xếp</span>
+                  <DownOutlined className="text-[9px] opacity-80" />
+                </button>
+              </Dropdown>
+
+              {/* Refresh Button */}
+              <button
+                type="button"
+                onClick={fetchUsers}
+                disabled={loading}
+                className="w-full text-slate-600 hover:text-slate-900 rounded-xl h-9 flex items-center justify-center border border-slate-200 bg-white hover:bg-slate-50 text-xs font-medium transition-all"
+              >
+                <ReloadOutlined className={`text-xs ${loading ? 'animate-spin' : ''}`} />
+                <span className="ml-1">Làm mới</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* View content: Table or Grid */}
-        {viewMode === 'table' ? (
-          <Table
-            columns={columns}
-            dataSource={filteredUsers}
-            loading={loading}
-            pagination={{
-              pageSize: 8,
-              showTotal: (total) => `Tổng cộng ${total} người dùng`,
-              className: 'px-4 pb-4 print:hidden',
-            }}
-            rowClassName="hover:bg-gray-50 transition-colors cursor-pointer"
-            className="custom-table"
-          />
+        {activeViewMode === 'table' ? (
+          <div className="overflow-x-auto">
+            <Table
+              columns={columns}
+              dataSource={filteredUsers}
+              loading={loading}
+              pagination={{
+                pageSize: 8,
+                showTotal: (total) => `Tổng cộng ${total} người dùng`,
+                className: 'px-4 pb-4 print:hidden flex-wrap',
+              }}
+              rowClassName="hover:bg-gray-50 transition-colors cursor-pointer"
+              className="custom-table"
+            />
+          </div>
         ) : (
-          <div className="p-5 min-h-[300px]">
+          <div className="p-4 sm:p-5 min-h-[300px]">
             {filteredUsers.length === 0 ? (
               <Empty description="Không tìm thấy người dùng phù hợp" className="py-12" />
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {/* Employee Cards Grid (Matching Image 2 Reference) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
                   {paginatedGridUsers.map((item) => {
                     const isInactive = item.status === 'Inactive';
                     const gridActionItems: any[] = [
@@ -919,13 +1066,13 @@ export default function UserManagementPage() {
                     return (
                       <Card
                         key={item.id}
-                        className="card-animate rounded-xl border border-gray-100 shadow-sm overflow-hidden relative group bg-white"
-                        styles={{ body: { padding: '18px 16px' } }}
+                        className="rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all duration-200 relative bg-white overflow-hidden"
+                        styles={{ body: { padding: '20px 18px' } }}
                       >
-                        {/* Top Row: Status badge & Dropdown */}
-                        <div className="flex justify-between items-center w-full mb-3">
+                        {/* Status Tag & Action Dropdown Top Row */}
+                        <div className="flex justify-between items-center w-full mb-1">
                           <Tag
-                            className={`border-0 px-2 py-0.5 rounded-md font-medium text-xs ${item.status === 'Active'
+                            className={`border-0 px-2 py-0.5 rounded-md font-medium text-[11px] ${item.status === 'Active'
                               ? 'bg-emerald-50 text-emerald-600'
                               : 'bg-rose-50 text-rose-500'
                               }`}
@@ -942,57 +1089,56 @@ export default function UserManagementPage() {
                               type="text"
                               shape="circle"
                               size="small"
-                              icon={<MoreOutlined className="rotate-90 text-gray-400" />}
-                              className="hover:bg-gray-100"
+                              icon={<MoreOutlined className="rotate-90 text-slate-400" />}
+                              className="hover:bg-slate-100"
                             />
                           </Dropdown>
                         </div>
 
-                        {/* Avatar & User Name with User ID */}
+                        {/* Centered Employee Card Details (Matching Screenshot 2) */}
                         <div className="flex flex-col items-center text-center">
                           <Avatar
                             src={`https://api.dicebear.com/7.x/notionists/svg?seed=${item.avatarSeed}`}
-                            size={64}
-                            className="bg-gray-100 ring-4 ring-gray-50 shadow-sm mb-2.5"
+                            size={76}
+                            className="bg-slate-50 ring-4 ring-slate-50 shadow-xs mb-3 border border-slate-100"
                           />
-                          <Text strong className="text-gray-800 text-base font-semibold leading-tight hover:text-blue-600 transition-colors">
+
+                          <Text strong className="text-slate-800 text-base sm:text-lg font-bold leading-tight hover:text-teal-600 transition-colors">
                             {item.name}
                           </Text>
-                          <span className="text-xs text-gray-400 font-normal mt-0.5">
-                            ID: #{item.id}
+
+                          <span className="text-xs sm:text-sm font-normal text-slate-500 mt-0.5">
+                            {item.role || 'Nhân viên'}
                           </span>
 
-                          {/* Role & Department */}
-                          <div className="flex items-center gap-1.5 mt-2.5 flex-wrap justify-center">
-                            <Tag className="border-0 rounded-full px-2.5 py-0.5 font-medium text-xs bg-blue-50 text-blue-600 m-0">
-                              {item.role}
-                            </Tag>
-                            {item.department && item.department !== 'N/A' && (
-                              <Tag className="border-0 rounded-full px-2.5 py-0.5 font-medium text-xs bg-slate-100 text-slate-600 m-0">
-                                {item.department}
-                              </Tag>
-                            )}
-                          </div>
+                          {item.department && item.department !== 'N/A' && (
+                            <span className="inline-block mt-2 text-xs font-medium bg-teal-50/80 text-teal-700 border border-teal-100 px-3 py-0.5 rounded-md">
+                              {item.department}
+                            </span>
+                          )}
 
-                          {/* Contact Info */}
-                          <div className="w-full border-t border-gray-100 my-3 pt-3 flex flex-col gap-1.5">
-                            <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500 truncate">
-                              <MailOutlined className="text-gray-400 shrink-0 text-xs" />
+                          {/* Divider Line */}
+                          <div className="w-full border-t border-slate-100/90 my-3.5"></div>
+
+                          {/* Contact Info: Email & Phone */}
+                          <div className="w-full flex flex-col gap-1.5 text-center">
+                            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 truncate">
+                              <MailOutlined className="text-slate-400 shrink-0 text-xs" />
                               <span className="truncate">{item.email}</span>
                             </div>
-                            <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
-                              <PhoneOutlined className="text-gray-400 shrink-0 text-xs" />
+                            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
+                              <PhoneOutlined className="text-slate-400 shrink-0 text-xs" />
                               <span>{item.phone || 'Chưa có SĐT'}</span>
                             </div>
                           </div>
 
-                          {/* Action Button */}
-                          <div className="w-full mt-1">
+                          {/* Action Button at Bottom */}
+                          <div className="w-full mt-4">
                             <Button
                               size="small"
                               icon={<EditOutlined />}
                               onClick={() => handleOpenModal('edit', item)}
-                              className="w-full rounded-lg text-xs font-medium text-gray-700 border-gray-200 hover:text-blue-600 hover:border-blue-300 h-8"
+                              className="w-full rounded-lg text-xs font-medium text-slate-700 border-slate-200 hover:text-teal-600 hover:border-teal-300 h-8"
                             >
                               Chỉnh sửa
                             </Button>
@@ -1004,7 +1150,10 @@ export default function UserManagementPage() {
                 </div>
 
                 {/* Grid Pagination */}
-                <div className="mt-6 flex justify-end print:hidden">
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 print:hidden bg-slate-50/60 p-3 rounded-xl border border-slate-100">
+                  <div className="text-xs text-slate-500 font-medium">
+                    Hiển thị {(gridPage - 1) * gridPageSize + 1} - {Math.min(gridPage * gridPageSize, filteredUsers.length)} trong tổng số {filteredUsers.length} người dùng
+                  </div>
                   <Pagination
                     current={gridPage}
                     pageSize={gridPageSize}
@@ -1013,7 +1162,7 @@ export default function UserManagementPage() {
                       setGridPage(p);
                       setGridPageSize(ps);
                     }}
-                    showTotal={(total) => `Tổng cộng ${total} người dùng`}
+                    size="small"
                     showSizeChanger
                     pageSizeOptions={['8', '16', '24', '32']}
                   />
@@ -1160,15 +1309,19 @@ export default function UserManagementPage() {
 
       {/* Custom Styles overrides for Table & Print mode */}
       <style jsx global>{`
+        .custom-table .ant-table {
+          background: transparent !important;
+        }
         .custom-table .ant-table-thead > tr > th {
-          background: white !important;
+          background: #ffffff !important;
           color: #374151 !important;
           font-weight: 600 !important;
-          border-bottom: 1px solid #f3f4f6 !important;
+          padding: 14px 16px !important;
+          border-bottom: 1px solid #f1f5f9 !important;
         }
         .custom-table .ant-table-tbody > tr > td {
-          border-bottom: 1px solid #f3f4f6 !important;
-          padding: 16px !important;
+          border-bottom: 1px solid #f1f5f9 !important;
+          padding: 14px 16px !important;
         }
         .custom-table .ant-table-tbody > tr:last-child > td {
           border-bottom: none !important;

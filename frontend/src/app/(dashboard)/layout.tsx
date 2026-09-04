@@ -1,31 +1,26 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Layout, Menu, Typography, Dropdown, Avatar, Button, Space, Badge, message, Spin } from 'antd';
+import { Layout, Menu, Spin, Drawer, Button, App } from 'antd';
 import {
   DashboardOutlined,
   AppstoreOutlined,
-  LayoutOutlined,
   DropboxOutlined,
   TagOutlined,
   ShoppingCartOutlined,
-  MoonOutlined,
-  SearchOutlined,
-  TranslationOutlined,
-  BellOutlined,
-  MessageOutlined,
   UserOutlined,
   SafetyCertificateOutlined,
   TeamOutlined,
-  BranchesOutlined,
-  FolderOutlined,
-  FileTextOutlined,
+  MenuOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
+import { AppLogo } from '@/components/layout/AppLogo';
+import { HeaderActions } from '@/components/layout/HeaderActions';
+import { QuickSearchModal } from '@/components/layout/QuickSearchModal';
 
 const { Header, Sider, Content } = Layout;
-const { Text } = Typography;
 
 // Ánh xạ giữa Route URL và tên Module nghiệp vụ tương ứng
 const ROUTE_MODULE_MAP: Record<string, string> = {
@@ -39,10 +34,14 @@ const ROUTE_MODULE_MAP: Record<string, string> = {
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { message } = App.useApp();
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout, canReadModule } = useAuthStore();
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [searchFilter, setSearchFilter] = useState('');
 
   // Phục hồi session tức thì từ localStorage khi F5 / Refresh trang
   useEffect(() => {
@@ -66,17 +65,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (!mounted) return;
 
-    // Kiểm tra xem trình duyệt có lưu access_token hay không
     const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('access_token');
-
-    // Chỉ chuyển hướng về /login khi THỰC SỰ không có phiên đăng nhập nào được lưu
     if (!user && !hasToken) {
       router.push('/login');
       return;
     }
 
     if (user) {
-      // Route Guard: Kiểm tra nếu user cố truy cập vào URL mà không có quyền READ
       const requiredModule = ROUTE_MODULE_MAP[pathname];
       if (requiredModule && !canReadModule(requiredModule)) {
         message.error('Bạn không có quyền thao tác với chức năng này!');
@@ -85,7 +80,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [user, mounted, pathname, router, canReadModule]);
 
-  // Trong lúc đang phục hồi session từ localStorage
   if (!mounted || (!user && typeof window !== 'undefined' && !!localStorage.getItem('access_token'))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
@@ -98,7 +92,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return null;
   }
 
-  // Nếu đang truy cập trang không có quyền, chặn hiển thị và đợi redirect
   const requiredModule = ROUTE_MODULE_MAP[pathname];
   const isUnauthorized = requiredModule && !canReadModule(requiredModule);
   if (isUnauthorized) {
@@ -116,22 +109,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push('/login');
   };
 
-  /* ==========================================================================
-     MẪU MENU TREE (ĐA CẤP / CÂY MENU CON) - LƯU LẠI ĐỂ SỬ DỤNG KHI CẦN:
-     --------------------------------------------------------------------------
-     {
-       key: 'dashboard-sub',
-       icon: <DashboardOutlined />,
-       label: 'Dashboard',
-       children: [
-         { key: '/', label: 'HRM Dashboard' },
-         { key: '/inventory', label: 'Inventory Dashboard' },
-         canReadModule('CRM') ? { key: '/crm', label: 'CRM Dashboard' } : null,
-       ].filter(Boolean),
-     },
-     ========================================================================== */
+  // Xử lý điều hướng menu thống nhất giữa Sidebar và Drawer (Offcanvas)
+  const handleMenuNavigate = (key: string) => {
+    if (key.startsWith('/')) {
+      router.push(key);
+    } else {
+      message.info(`Menu mẫu: ${key} (Sẵn sàng gắn route khi lên plan)`);
+    }
+  };
 
-  // Lọc Menu Sidebar theo quyền READ chuẩn quốc tế
+  // Menu Sidebar (Dùng chung 100% cho cả Desktop Sider và Mobile Offcanvas)
   const filteredMenuItems = [
     {
       key: 'main-group',
@@ -145,24 +132,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         },
         canReadModule('User')
           ? {
-              key: '/users',
-              icon: <UserOutlined />,
-              label: 'Quản lý User',
-            }
+            key: '/users',
+            icon: <UserOutlined />,
+            label: 'Quản lý User',
+          }
           : null,
         canReadModule('Role')
           ? {
-              key: '/roles',
-              icon: <SafetyCertificateOutlined />,
-              label: 'Quản lý Phân quyền',
-            }
+            key: '/roles',
+            icon: <SafetyCertificateOutlined />,
+            label: 'Quản lý Phân quyền',
+          }
           : null,
         canReadModule('Department')
           ? {
-              key: '/organization',
-              icon: <TeamOutlined />,
-              label: 'Cơ cấu Tổ chức',
-            }
+            key: '/organization',
+            icon: <TeamOutlined />,
+            label: 'Cơ cấu Tổ chức',
+          }
           : null,
       ].filter(Boolean),
     },
@@ -177,153 +164,183 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { key: '/units', icon: <ShoppingCartOutlined />, label: 'Units' },
       ],
     },
-    {
-      key: 'template-tree-group',
-      label: <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2 mt-4 inline-block">Mẫu Menu Tree</span>,
-      type: 'group' as const,
-      children: [
-        {
-          key: 'level-1-tree',
-          icon: <BranchesOutlined />,
-          label: 'Level 1 (Menu Gốc)',
-          children: [
-            {
-              key: 'level-2-1',
-              icon: <FileTextOutlined />,
-              label: 'Level 2.1 (Mục con)',
-            },
-            {
-              key: 'level-2-2',
-              icon: <FolderOutlined />,
-              label: 'Level 2.2 (Nhánh con)',
-              children: [
-                {
-                  key: 'level-3-1',
-                  label: 'Level 3.1 (Chi tiết A)',
-                },
-                {
-                  key: 'level-3-2',
-                  label: 'Level 3.2 (Chi tiết B)',
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
   ];
 
-  const userMenu = {
-    items: [
-      {
-        key: '1',
-        label: <Text strong>{user?.name || 'Admin'}</Text>,
-        disabled: true,
-      },
-      { type: 'divider' as const },
-      {
-        key: '2',
-        label: 'Đăng xuất',
-        danger: true,
-        onClick: handleLogout,
-      },
-    ],
-  };
+  // Avatar ảnh người dùng chuẩn mẫu
+  const userAvatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80";
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#f1f5f9', padding: '16px', gap: '16px', flexDirection: 'row' }}>
-      <Sider 
-        width={260} 
-        theme="light" 
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col md:flex-row md:p-4 md:gap-4">
+      {/* =======================================================================
+          MOBILE HEADER
+          ======================================================================= */}
+      <header className="md:hidden flex items-center justify-between px-4 h-15 bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-2xs">
+        {/* Bên trái: Logo + Nút Hamburger */}
+        <div className="flex items-center gap-3">
+          <AppLogo size="sm" showText={false} onClick={() => router.push('/')} />
+
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            className="w-9 h-9 rounded-full border border-slate-200/90 bg-white flex items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-90 transition-all shadow-2xs cursor-pointer"
+            aria-label="Mở menu điều hướng"
+          >
+            <MenuOutlined className="text-sm font-bold text-slate-700" />
+          </button>
+        </div>
+
+        {/* Bên phải: Group nút tác vụ Header */}
+        <HeaderActions
+          user={user}
+          userAvatarUrl={userAvatarUrl}
+          onOpenSearch={() => setSearchModalOpen(true)}
+          onLogout={handleLogout}
+          variant="mobile"
+        />
+      </header>
+
+      {/* =======================================================================
+          MOBILE DRAWER SIDEBAR
+          ======================================================================= */}
+      <Drawer
+        placement="left"
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        closable={false}
+        styles={{
+          wrapper: { width: '260px', maxWidth: '80vw' },
+          body: { padding: 0 },
+          section: { borderRadius: '0 16px 16px 0' }
+        }}
+      >
+        {/* Header của Drawer */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <AppLogo size="sm" showText={true} />
+
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            aria-label="Đóng menu"
+          >
+            <CloseOutlined className="text-sm" />
+          </button>
+        </div>
+
+        {/* Danh sách Menu */}
+        <div className="p-3 overflow-y-auto max-h-[calc(100vh-65px)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <Menu
+            mode="inline"
+            selectedKeys={[pathname]}
+            items={filteredMenuItems as any}
+            onClick={({ key }) => {
+              handleMenuNavigate(key);
+              setMobileMenuOpen(false);
+            }}
+            className="border-r-0 custom-sidebar-menu"
+          />
+        </div>
+      </Drawer>
+
+      {/* =======================================================================
+          MODAL TÌM KIẾM NHANH
+          ======================================================================= */}
+      <QuickSearchModal
+        open={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        searchFilter={searchFilter}
+        setSearchFilter={setSearchFilter}
+      />
+
+      {/* =======================================================================
+          DESKTOP SIDEBAR
+          ======================================================================= */}
+      <Sider
+        width={260}
+        theme="light"
         className="hidden md:block shadow-sm z-20"
-        style={{ 
-          overflow: 'auto', 
-          height: 'calc(100vh - 32px)', 
-          position: 'sticky', 
-          top: '16px', 
+        style={{
+          overflow: 'auto',
+          height: 'calc(100vh - 32px)',
+          position: 'sticky',
+          top: '16px',
           borderRadius: '16px',
           background: 'white'
         }}
       >
         <div className="flex h-16 items-center px-6 border-b border-gray-50">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-sm">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-            </div>
-            <Text strong className="text-xl tracking-tight text-gray-800">
-              BizSocial ERP
-            </Text>
-          </div>
+          <AppLogo size="md" showText={true} />
         </div>
         <Menu
           mode="inline"
           selectedKeys={[pathname]}
           items={filteredMenuItems as any}
-          onClick={({ key }) => {
-            if (key.startsWith('/')) {
-              router.push(key);
-            } else {
-              message.info(`Menu mẫu: ${key} (Sẵn sàng gắn route khi lên plan)`);
-            }
-          }}
+          onClick={({ key }) => handleMenuNavigate(key)}
           className="border-r-0 pt-4 custom-sidebar-menu px-3"
         />
       </Sider>
 
-      <Layout style={{ background: 'transparent', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, minWidth: 0 }}>
-        <Header 
-          className="flex justify-between items-center px-6 shadow-sm z-10 sticky top-4"
-          style={{ 
-            background: '#ffffff',
-            height: '64px', 
-            borderRadius: '16px',
-            lineHeight: '64px',
-            padding: '0 24px'
-          }}
-        >
-          <div className="flex items-center">
-            <Button 
-              className="flex items-center gap-2 border-gray-200 text-gray-600 rounded-full px-4 font-medium h-9"
-            >
-              <div className="w-5 h-5 rounded bg-slate-800 flex items-center justify-center text-white text-xs">F</div>
-              Falcon LLP
-              <span className="text-gray-400 text-xs">•••</span>
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <Button type="text" shape="circle" icon={<MoonOutlined className="text-gray-500" />} />
-            <Button type="text" shape="circle" icon={<SearchOutlined className="text-gray-500" />} />
-            <Badge dot color="red" offset={[-4, 4]}>
-              <Button type="text" shape="circle" icon={<BellOutlined className="text-gray-500" />} />
-            </Badge>
-            <Button type="text" shape="circle" icon={<MessageOutlined className="text-gray-500" />} />
-            
-            <Dropdown menu={userMenu} placement="bottomRight">
-              <Avatar 
-                src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix"
-                className="cursor-pointer border border-gray-200 ml-2" 
-                size="default"
-              />
-            </Dropdown>
-          </div>
-        </Header>
+      {/* =======================================================================
+          MAIN CONTENT AREA
+          ======================================================================= */}
+      <div className="flex-1 flex flex-col gap-3 md:gap-4 min-w-0">
+        {/* Desktop Header Wrapper */}
+        <div className="hidden md:block sticky top-0 z-30 pt-4 pb-2 bg-[#f8fafc]">
+          <Header
+            className="flex justify-between items-center px-6 shadow-2xs border border-slate-200/80"
+            style={{
+              background: '#ffffff',
+              height: '60px',
+              borderRadius: '16px',
+              padding: '0 20px',
+              lineHeight: 'normal'
+            }}
+          >
+            <div className="flex items-center">
+              <Button
+                className="flex items-center gap-2 border-slate-200 text-slate-700 rounded-full px-3.5 font-medium h-9 bg-slate-50/60 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded bg-slate-900 flex items-center justify-center text-white text-xs font-bold shrink-0">B</div>
+                <span className="text-xs font-bold text-slate-800">BizSocial Corp</span>
+                <span className="text-slate-400 text-xs font-mono">•••</span>
+              </Button>
+            </div>
 
-        <Content className="overflow-y-auto overflow-x-hidden py-2" style={{ minHeight: 'calc(100vh - 112px)' }}>
+            {/* Bên phải: Group nút tác vụ Header */}
+            <HeaderActions
+              user={user}
+              userAvatarUrl={userAvatarUrl}
+              onOpenSearch={() => setSearchModalOpen(true)}
+              onLogout={handleLogout}
+              variant="desktop"
+            />
+          </Header>
+        </div>
+
+        {/* Nội dung trang */}
+        <Content className="overflow-y-auto overflow-x-hidden p-3 md:p-0" style={{ minHeight: 'calc(100vh - 112px)' }}>
           {children}
         </Content>
-      </Layout>
+      </div>
 
       <style jsx global>{`
         .custom-sidebar-menu.ant-menu-light .ant-menu-item-selected {
-          background-color: #f0f7ff;
-          color: #1677ff;
+          background-color: #1e293b !important;
+          color: #ffffff !important;
           font-weight: 600;
           border-radius: 8px;
+        }
+        .custom-sidebar-menu.ant-menu-light .ant-menu-item-selected .ant-menu-title-content,
+        .custom-sidebar-menu.ant-menu-light .ant-menu-item-selected .anticon {
+          color: #ffffff !important;
         }
         .custom-sidebar-menu.ant-menu-light .ant-menu-item {
           border-radius: 8px;
           margin-bottom: 4px;
+        }
+        .custom-sidebar-menu.ant-menu-light .ant-menu-item:hover:not(.ant-menu-item-selected) {
+          background-color: #f1f5f9 !important;
+          color: #0f172a !important;
         }
         .custom-sidebar-menu .ant-menu-submenu-title {
           border-radius: 8px;
@@ -340,6 +357,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           color: #1677ff !important;
         }
       `}</style>
-    </Layout>
+    </div>
   );
 }

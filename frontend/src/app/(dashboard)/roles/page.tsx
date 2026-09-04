@@ -204,6 +204,17 @@ export default function RolesMatrixPage() {
   const [selectedRoleDetail, setSelectedRoleDetail] = useState<any>(null);
   const [loadingDetail, setLoadingDetail] = useState<boolean>(false);
 
+  const groupedPermissionsDetail = useMemo(() => {
+    if (!selectedRoleDetail?.permissions) return {};
+    const map: Record<string, any[]> = {};
+    selectedRoleDetail.permissions.forEach((p: any) => {
+      const modName = p.module?.name || 'Chung';
+      if (!map[modName]) map[modName] = [];
+      map[modName].push(p);
+    });
+    return map;
+  }, [selectedRoleDetail]);
+
   // Lấy token đăng nhập
   const getAuthHeader = () => {
     let currentToken = token;
@@ -534,21 +545,17 @@ export default function RolesMatrixPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header Actions */}
-      <div className="flex justify-between items-center mb-3">
-        <Title level={3} className="!mb-0 font-semibold text-gray-800">
+      {/* Header Actions - Same row on mobile & desktop */}
+      <div className="flex flex-row justify-between items-center gap-2 mb-1 print:hidden">
+        <Title level={3} className="!mb-0 font-bold text-slate-800 tracking-tight text-lg sm:text-2xl truncate">
           Quản lý Phân quyền
         </Title>
-        <Space size="small">
-          {hasChanges && (
-            <Tag color="warning" className="px-2.5 py-1 text-xs font-medium rounded-lg m-0">
-              Có thay đổi chưa lưu
-            </Tag>
-          )}
+
+        <div className="flex items-center gap-1.5 shrink-0">
           {hasChanges && (
             <Button
               onClick={handleResetChanges}
-              className="text-gray-600 font-medium h-8 px-3 shadow-none border-gray-200 hover:text-blue-600"
+              className="text-slate-700 font-medium text-xs h-8 px-2.5 shadow-none border-slate-200 hover:text-blue-600 rounded-lg"
             >
               Hoàn tác
             </Button>
@@ -559,16 +566,16 @@ export default function RolesMatrixPage() {
             loading={saving}
             disabled={!hasChanges}
             onClick={handleSaveMatrix}
-            className="bg-[#1e293b] hover:bg-slate-700 border-0 font-medium h-8"
+            className="bg-slate-900 hover:bg-slate-800 border-0 font-medium text-xs h-8 px-2.5 sm:px-3 rounded-lg shadow-xs flex items-center justify-center gap-1"
           >
-            Lưu thay đổi ma trận
+            <span className="hidden sm:inline">Lưu ma trận</span>
           </Button>
           <Button
             icon={<ReloadOutlined />}
             onClick={fetchMatrixData}
-            className="text-gray-600 font-medium h-8 px-2.5 shadow-none border-gray-200 hover:text-blue-600"
+            className="text-slate-600 font-medium h-8 w-8 p-0 flex items-center justify-center shadow-none border-slate-200 hover:text-blue-600 rounded-lg"
           />
-        </Space>
+        </div>
       </div>
 
       {/* Tabs Chuyển Đổi */}
@@ -581,18 +588,18 @@ export default function RolesMatrixPage() {
           {
             key: 'matrix',
             label: (
-              <span className="flex items-center gap-2 font-medium px-2">
+              <span className="flex items-center gap-1.5 font-medium px-1 text-xs sm:text-sm">
                 <SafetyCertificateOutlined />
-                Ma trận Phân quyền (Role Matrix)
+                Ma trận Phân quyền
               </span>
             ),
           },
           {
             key: 'roles',
             label: (
-              <span className="flex items-center gap-2 font-medium px-2">
+              <span className="flex items-center gap-1.5 font-medium px-1 text-xs sm:text-sm">
                 <TeamOutlined />
-                Tổng quan Vai trò (Role Cards)
+                Tổng quan Vai trò
                 <Badge count={visibleRoles.length} className="ml-1" style={{ backgroundColor: '#3b82f6' }} />
               </span>
             ),
@@ -605,54 +612,142 @@ export default function RolesMatrixPage() {
           <Spin size="large" description="Đang tải dữ liệu ma trận phân quyền..." />
         </Card>
       ) : activeTab === 'matrix' ? (
-        /* TAB 1: BẢNG MA TRẬN PHÂN QUYỀN */
+        /* TAB 1: MA TRẬN PHÂN QUYỀN */
         <Card className="rounded-2xl shadow-xs border border-slate-100 overflow-hidden" styles={{ body: { padding: 0 } }}>
-          {/* Thanh công cụ bảng ma trận */}
-          <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white flex-wrap gap-4">
-            {/* Chú thích màu sắc 5 hành động */}
-            <div className="flex items-center gap-3 flex-wrap text-xs">
-              <span className="font-semibold text-slate-700 mr-1 flex items-center gap-1">
-                <InfoCircleOutlined className="text-slate-400" /> Chú giải quyền:
-              </span>
+          {/* Thanh công cụ ma trận */}
+          <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-stretch md:items-center bg-white gap-3">
+            {/* Chú thích màu sắc 5 hành động (Nằm trên 1 hàng không xuống dòng) */}
+            <div className="flex items-center gap-2 text-xs bg-slate-50/80 p-2 rounded-xl border border-slate-100 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full sm:w-auto">
               {ACTIONS.map((a) => (
-                <div key={a.key} className="flex items-center gap-1.5">
-                  <span className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[11px] border ${a.bg}`}>
+                <div key={a.key} className="flex items-center gap-1 shrink-0">
+                  <span className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] border ${a.bg}`}>
                     {a.short}
                   </span>
-                  <span className="text-slate-600 font-medium">
-                    {a.label} <span className="text-slate-400 font-normal">({a.key})</span>
+                  <span className="text-slate-600 font-medium text-[11px]">
+                    {a.label}
                   </span>
                 </div>
               ))}
             </div>
 
             {/* Ô tìm kiếm module */}
-            <div className="w-72">
+            <div className="w-full sm:w-72">
               <Input
                 placeholder="Tìm kiếm phân hệ / module..."
                 prefix={<SearchOutlined className="text-slate-400" />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 allowClear
-                className="rounded-lg h-9"
+                className="rounded-xl h-9 text-xs"
               />
             </div>
           </div>
 
-          {/* Bảng Table Ma trận */}
-          <Table
-            columns={matrixColumns}
-            dataSource={filteredModules}
-            rowKey="id"
-            pagination={false}
-            bordered
-            className="custom-matrix-table"
-          />
+          {/* Desktop Table View */}
+          <div className="hidden sm:block overflow-x-auto w-full">
+            <Table
+              columns={matrixColumns}
+              dataSource={filteredModules}
+              rowKey="id"
+              pagination={false}
+              bordered
+              className="custom-matrix-table min-w-[700px]"
+            />
+          </div>
 
-          {/* Footer ghi chú chính sách bảo mật */}
-          <div className="p-4 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 flex justify-between items-center flex-wrap gap-2">
+          {/* Mobile Responsive View: Module Cards (Không dùng Table bị gạt lùi) */}
+          <div className="block sm:hidden p-3 space-y-3 bg-slate-50/40">
+            {filteredModules.map((moduleItem) => {
+              const conf = MODULE_CONFIG[moduleItem.name] || {
+                title: moduleItem.name,
+                desc: 'Phân hệ chức năng hệ thống',
+                icon: <SafetyCertificateOutlined />,
+                color: 'blue',
+              };
 
-            <div className="text-slate-400">
+              return (
+                <div
+                  key={moduleItem.id}
+                  className="bg-white rounded-xl border border-slate-200/80 p-3 shadow-xs"
+                >
+                  {/* Module Title & Icon */}
+                  <div className="flex items-center gap-2 pb-2.5 border-b border-slate-100 mb-2.5">
+                    <span className="text-base shrink-0">{conf.icon}</span>
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-slate-800 text-xs m-0 leading-tight truncate">
+                        {conf.title}
+                      </h4>
+                      <p className="text-[10px] text-slate-400 m-0 mt-0.5 truncate">
+                        {conf.desc}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Module Roles Permission Toggles */}
+                  <div className="space-y-2">
+                    {visibleRoles.map((role) => {
+                      const isSuperAdmin = role.name === 'Super Admin';
+                      const roleDetail = ROLE_DETAILS[role.name] || {
+                        icon: <UserOutlined />,
+                        color: 'blue',
+                      };
+
+                      return (
+                        <div
+                          key={role.id}
+                          className="flex items-center justify-between bg-slate-50/70 p-2 rounded-lg border border-slate-100"
+                        >
+                          {/* Role Name */}
+                          <div className="flex items-center gap-1.5 min-w-0 pr-1">
+                            <span className="text-xs shrink-0">{roleDetail.icon}</span>
+                            <span className="font-semibold text-[11px] text-slate-800 truncate">
+                              {role.name}
+                            </span>
+                          </div>
+
+                          {/* 5 Action Toggle Buttons */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            {ACTIONS.map((act) => {
+                              const hasPermission = permissionSet.has(
+                                `${role.id}-${moduleItem.id}-${act.key}`
+                              );
+                              return (
+                                <button
+                                  type="button"
+                                  key={act.key}
+                                  disabled={isSuperAdmin}
+                                  onClick={() =>
+                                    handleTogglePermission(
+                                      role.id,
+                                      role.name,
+                                      moduleItem.id,
+                                      act.key
+                                    )
+                                  }
+                                  className={`w-6 h-6 rounded font-bold text-[10px] flex items-center justify-center transition-all cursor-pointer border ${
+                                    hasPermission
+                                      ? `${act.bg} shadow-xs font-semibold scale-105`
+                                      : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'
+                                  }`}
+                                  title={`${act.label} (${act.key})`}
+                                >
+                                  {act.short}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Footer ghi chú */}
+          <div className="p-3 sm:p-4 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 flex justify-between items-center flex-wrap gap-2">
+            <div className="text-slate-400 font-medium text-[11px]">
               Tổng số phân hệ: {modules.length} modules • 5 quyền hành động
             </div>
           </div>
@@ -770,72 +865,147 @@ export default function RolesMatrixPage() {
         </div>
       )}
 
-      {/* Drawer Chi Tiết Vai Trò */}
+      {/* Drawer Chi Tiết Phân Quyền Vai Trò (UX/UI Premium) */}
       <Drawer
         title={
           selectedRoleDetail ? (
-            <div className="flex items-center gap-2">
-              <SafetyCertificateOutlined className="text-blue-600" />
-              <span>Hồ sơ Phân quyền: {selectedRoleDetail.name}</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center text-sm shadow-2xs shrink-0">
+                <SafetyCertificateOutlined />
+              </div>
+              <div className="min-w-0">
+                <h4 className="font-bold text-slate-900 text-sm sm:text-base m-0 leading-tight truncate">
+                  Hồ sơ Phân quyền: {selectedRoleDetail.name}
+                </h4>
+                <span className="text-[11px] text-slate-400 font-normal block truncate">
+                  Chi tiết vai trò & ma trận quyền hạn đã cấp
+                </span>
+              </div>
             </div>
           ) : (
             'Chi tiết vai trò'
           )
         }
         placement="right"
-        size="large"
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
+        styles={{
+          wrapper: { width: '100%', maxWidth: '580px' },
+          header: { padding: '14px 20px', borderBottom: '1px solid #f1f5f9' },
+          body: { padding: '20px' },
+        }}
       >
         {loadingDetail ? (
-          <div className="text-center py-12">
-            <Spin description="Đang tải thông tin chi tiết..." />
+          <div className="text-center py-16">
+            <Spin size="large" description="Đang tải thông tin chi tiết vai trò..." />
           </div>
         ) : selectedRoleDetail ? (
-          <div className="space-y-6">
-            <Alert
-              message={`Vai trò: ${selectedRoleDetail.name}`}
-              description={selectedRoleDetail.description || 'Chưa có mô tả chi tiết cho vai trò này.'}
-              type="info"
-              showIcon
-              className="rounded-xl border-blue-100 bg-blue-50/60 text-xs"
-            />
-
-            <div>
-              <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center justify-between">
-                <span>Nhân sự đang giữ vai trò này:</span>
-                <Tag color="blue">{selectedRoleDetail.users?.length || 0} người</Tag>
-              </h4>
-              <List
-                dataSource={selectedRoleDetail.users || []}
-                locale={{ emptyText: 'Chưa có nhân sự nào được gán vai trò này.' }}
-                renderItem={(u: any) => (
-                  <List.Item className="py-2.5 px-0">
-                    <List.Item.Meta
-                      avatar={<Avatar icon={<UserOutlined />} className="bg-slate-200 text-slate-700" />}
-                      title={<span className="font-semibold text-xs text-slate-900">{u.name}</span>}
-                      description={<span className="text-[11px] text-slate-400">{u.email}</span>}
-                    />
-                    <Tag color={u.status === 'Active' ? 'green' : 'red'} className="text-[10px] m-0">
-                      {u.status === 'Active' ? 'Hoạt động' : 'Đã khóa'}
-                    </Tag>
-                  </List.Item>
-                )}
-              />
+          <div className="space-y-5">
+            {/* Banner Tóm tắt Vai Trò */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-slate-50 to-indigo-50/60 border border-blue-100/90 shadow-2xs">
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="flex items-center gap-2">
+                  <Badge status="processing" color="#2563eb" />
+                  <span className="font-bold text-slate-900 text-base">{selectedRoleDetail.name}</span>
+                </div>
+                <Tag color="blue" className="text-xs font-semibold m-0 border-0 bg-blue-100/80 text-blue-700 px-2 py-0.5">
+                  Mã vai trò: #{selectedRoleDetail.id}
+                </Tag>
+              </div>
+              <p className="text-xs text-slate-600 m-0 leading-relaxed">
+                {selectedRoleDetail.description || 'Chưa có mô tả chi tiết cho vai trò này.'}
+              </p>
             </div>
 
-            <div>
-              <h4 className="text-sm font-bold text-slate-800 mb-3">
-                Quyền hạn đã cấp ({selectedRoleDetail.permissions?.length || 0}):
-              </h4>
-              <div className="flex flex-wrap gap-1.5 max-h-60 overflow-y-auto p-2 border border-slate-100 rounded-xl bg-slate-50">
-                {selectedRoleDetail.permissions?.map((p: any) => (
-                  <Tag key={p.id} className="text-xs py-0.5 px-2 bg-white border border-slate-200 rounded-md">
-                    <span className="font-semibold text-slate-700">{p.module?.name}</span>:{' '}
-                    <span className="text-blue-600 font-bold">{p.action}</span>
-                  </Tag>
-                ))}
+            {/* Khối 1: Danh sách nhân sự giữ vai trò */}
+            <div className="p-4 rounded-2xl border border-slate-200/80 bg-white shadow-2xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-800 m-0 flex items-center gap-1.5">
+                  <TeamOutlined className="text-blue-600" />
+                  <span>Nhân sự đang giữ vai trò này</span>
+                </h4>
+                <Badge
+                  count={`${selectedRoleDetail.users?.length || 0} người`}
+                  style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 600, fontSize: '10px' }}
+                />
               </div>
+
+              {(!selectedRoleDetail.users || selectedRoleDetail.users.length === 0) ? (
+                <div className="text-center py-6 text-slate-400 text-xs bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+                  Chưa có nhân sự nào được gán vai trò này.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto pr-1">
+                  {selectedRoleDetail.users.map((u: any) => (
+                    <div key={u.id || u.email} className="py-2.5 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Avatar size={32} icon={<UserOutlined />} className="bg-slate-800 text-white font-bold shrink-0" />
+                        <div className="min-w-0">
+                          <span className="font-bold text-slate-800 text-xs block truncate leading-tight">{u.name}</span>
+                          <span className="text-[11px] text-slate-400 block truncate mt-0.5">{u.email}</span>
+                        </div>
+                      </div>
+                      <Tag
+                        color={u.status === 'Active' ? 'green' : 'red'}
+                        className="text-[10px] m-0 font-medium px-2 py-0.5 rounded-full border-0 bg-emerald-50 text-emerald-700"
+                      >
+                        ● {u.status === 'Active' ? 'Hoạt động' : 'Đã khóa'}
+                      </Tag>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Khối 2: Ma trận quyền hạn theo Module */}
+            <div className="p-4 rounded-2xl border border-slate-200/80 bg-white shadow-2xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-800 m-0 flex items-center gap-1.5">
+                  <CrownOutlined className="text-amber-500" />
+                  <span>Quyền hạn đã cấp theo Module</span>
+                </h4>
+                <Badge
+                  count={`${selectedRoleDetail.permissions?.length || 0} quyền`}
+                  style={{ backgroundColor: '#faf5ff', color: '#7e22ce', border: '1px solid #e9d5ff', fontWeight: 600, fontSize: '10px' }}
+                />
+              </div>
+
+              {(!selectedRoleDetail.permissions || selectedRoleDetail.permissions.length === 0) ? (
+                <div className="text-center py-6 text-slate-400 text-xs bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+                  Vai trò này chưa được cấp bất kỳ quyền hạn nào.
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                  {Object.entries(groupedPermissionsDetail).map(([modName, perms]) => (
+                    <div key={modName} className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                          <CheckCircleOutlined className="text-emerald-500 text-xs" />
+                          {MODULE_CONFIG[modName]?.title || modName}
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-medium">
+                          {perms.length} thao tác
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {perms.map((p: any) => {
+                          const actionConfig = ACTIONS.find((a) => a.key === p.action);
+                          return (
+                            <Tag
+                              key={p.id}
+                              className={`text-[11px] font-semibold py-0.5 px-2.5 rounded-lg border-0 m-0 flex items-center gap-1 ${actionConfig?.bg || 'bg-blue-50 text-blue-700'}`}
+                            >
+                              <span>{actionConfig?.label || p.action}</span>
+                              <span className="text-[9px] opacity-75 font-mono">({p.action})</span>
+                            </Tag>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ) : null}

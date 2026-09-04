@@ -60,3 +60,17 @@ body {
   }
 }
 
+/* Ant Design Modal Global Clean Padding Override */
+.ant-modal .ant-modal-content {
+  padding: 16px 20px !important;
+}
+
+.ant-modal .ant-modal-header {
+  margin-bottom: 12px !important;
+}
+
+.ant-modal .ant-modal-body {
+  padding: 0 !important;
+}
+
+
