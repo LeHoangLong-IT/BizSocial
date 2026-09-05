@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ConfigProvider, App as AntdApp } from 'antd';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
+import { AntdThemeProvider } from '@/components/providers/AntdThemeProvider';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,21 +17,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200`}>
         <AntdRegistry>
-          <ConfigProvider
-            theme={{
-              token: {
-                colorPrimary: '#1677ff',
-                borderRadius: 8,
-              },
-            }}
-          >
-            <AntdApp>
-              {children}
-            </AntdApp>
-          </ConfigProvider>
+          <AntdThemeProvider>
+            {children}
+          </AntdThemeProvider>
         </AntdRegistry>
       </body>
     </html>

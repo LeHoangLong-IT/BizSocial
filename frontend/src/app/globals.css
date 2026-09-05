@@ -73,4 +73,17 @@ body {
   padding: 0 !important;
 }
 
+/* Tắt hiển thị thanh scrollbar (scroll-y, scroll-x) mặc định của trình duyệt nhưng giữ khả năng cuộn */
+::-webkit-scrollbar {
+  width: 0px !important;
+  height: 0px !important;
+  display: none !important;
+}
+
+html, body, div, main, section {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+
 

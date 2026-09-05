@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout, Menu, Spin, Drawer, Button, App } from 'antd';
 import {
   DashboardOutlined,
@@ -82,7 +82,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!mounted || (!user && typeof window !== 'undefined' && !!localStorage.getItem('access_token'))) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-slate-950">
         <Spin size="large" />
       </div>
     );
@@ -96,9 +96,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isUnauthorized = requiredModule && !canReadModule(requiredModule);
   if (isUnauthorized) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-3">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 gap-3">
         <Spin size="large" />
-        <p className="text-sm text-slate-500 font-medium">Bạn không có quyền thao tác với chức năng này. Đang chuyển về Dashboard...</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Bạn không có quyền thao tác với chức năng này. Đang chuyển về Dashboard...</p>
       </div>
     );
   }
@@ -122,7 +122,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const filteredMenuItems = [
     {
       key: 'main-group',
-      label: <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2">Main</span>,
+      label: <span className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider px-2">Main</span>,
       type: 'group' as const,
       children: [
         {
@@ -155,7 +155,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     },
     {
       key: 'inventory-group',
-      label: <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2 mt-4 inline-block">Inventory</span>,
+      label: <span className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider px-2 mt-4 inline-block">Inventory</span>,
       type: 'group' as const,
       children: [
         { key: '/products', icon: <DropboxOutlined />, label: 'Products' },
@@ -170,11 +170,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const userAvatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80";
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col md:flex-row md:p-4 md:gap-4">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 flex flex-col md:flex-row md:p-4 md:gap-4 transition-colors duration-200">
       {/* =======================================================================
           MOBILE HEADER
           ======================================================================= */}
-      <header className="md:hidden flex items-center justify-between px-4 h-15 bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-2xs">
+      <header className="md:hidden flex items-center justify-between px-4 h-15 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-40 shadow-2xs">
         {/* Bên trái: Logo + Nút Hamburger */}
         <div className="flex items-center gap-3">
           <AppLogo size="sm" showText={false} onClick={() => router.push('/')} />
@@ -182,10 +182,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="w-9 h-9 rounded-full border border-slate-200/90 bg-white flex items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-90 transition-all shadow-2xs cursor-pointer"
+            className="w-9 h-9 rounded-full border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-90 transition-all shadow-2xs cursor-pointer"
             aria-label="Mở menu điều hướng"
           >
-            <MenuOutlined className="text-sm font-bold text-slate-700" />
+            <MenuOutlined className="text-sm font-bold text-slate-700 dark:text-slate-200" />
           </button>
         </div>
 
@@ -214,13 +214,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }}
       >
         {/* Header của Drawer */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
           <AppLogo size="sm" showText={true} />
 
           <button
             type="button"
             onClick={() => setMobileMenuOpen(false)}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Đóng menu"
           >
             <CloseOutlined className="text-sm" />
@@ -265,10 +265,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: 'sticky',
           top: '16px',
           borderRadius: '16px',
-          background: 'white'
         }}
       >
-        <div className="flex h-16 items-center px-6 border-b border-gray-50">
+        <div className="flex h-16 items-center px-6 border-b border-gray-50 dark:border-slate-800">
           <AppLogo size="md" showText={true} />
         </div>
         <Menu
@@ -285,11 +284,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ======================================================================= */}
       <div className="flex-1 flex flex-col gap-3 md:gap-4 min-w-0">
         {/* Desktop Header Wrapper */}
-        <div className="hidden md:block sticky top-0 z-30 pt-4 pb-2 bg-[#f8fafc]">
+        <div className="hidden md:block sticky top-0 z-30 pt-4 pb-2 bg-[#f8fafc] dark:bg-slate-950">
           <Header
-            className="flex justify-between items-center px-6 shadow-2xs border border-slate-200/80"
+            className="flex justify-between items-center px-6 shadow-2xs border border-slate-200/80 dark:border-slate-800"
             style={{
-              background: '#ffffff',
               height: '60px',
               borderRadius: '16px',
               padding: '0 20px',
@@ -298,10 +296,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             <div className="flex items-center">
               <Button
-                className="flex items-center gap-2 border-slate-200 text-slate-700 rounded-full px-3.5 font-medium h-9 bg-slate-50/60 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="flex items-center gap-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-full px-3.5 font-medium h-9 bg-slate-50/60 dark:bg-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
               >
-                <div className="w-5 h-5 rounded bg-slate-900 flex items-center justify-center text-white text-xs font-bold shrink-0">B</div>
-                <span className="text-xs font-bold text-slate-800">BizSocial Corp</span>
+                <div className="w-5 h-5 rounded bg-slate-900 dark:bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">B</div>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">BizSocial Corp</span>
                 <span className="text-slate-400 text-xs font-mono">•••</span>
               </Button>
             </div>
@@ -318,7 +316,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         {/* Nội dung trang */}
-        <Content className="overflow-y-auto overflow-x-hidden p-3 md:p-0" style={{ minHeight: 'calc(100vh - 112px)' }}>
+        <Content className="overflow-y-auto overflow-x-hidden p-3 md:p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ minHeight: 'calc(100vh - 112px)' }}>
           {children}
         </Content>
       </div>

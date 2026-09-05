@@ -1310,8 +1310,7 @@ export default function OrganizationPage() {
         centered
         destroyOnHidden
         styles={{
-          content: { padding: '16px 18px' },
-          body: { padding: 0 },
+          body: { padding: '16px 18px' },
         }}
       >
         {selectedDeptDetail && (
@@ -1710,9 +1709,8 @@ export default function OrganizationPage() {
         destroyOnHidden
         zIndex={1050}
         styles={{
-          content: { padding: '16px' },
           header: { marginBottom: '12px' },
-          body: { padding: 0 },
+          body: { padding: '16px' },
         }}
       >
         {drawerMembers.length === 0 ? (
