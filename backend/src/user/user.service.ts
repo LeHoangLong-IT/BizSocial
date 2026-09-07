@@ -70,6 +70,7 @@ export class UserService {
       include: {
         role: true,
         department: true,
+        team: true,
         permissions: true,
       }
     });
@@ -101,6 +102,14 @@ export class UserService {
       departmentId: updateUserDto.departmentId,
       teamId: updateUserDto.teamId,
     };
+
+    if (updateUserDto.avatar !== undefined) {
+      updateData.avatar = updateUserDto.avatar;
+    }
+
+    if (updateUserDto.coverImage !== undefined) {
+      updateData.coverImage = updateUserDto.coverImage;
+    }
 
     if (updateUserDto.password) {
       updateData.password = await bcrypt.hash(updateUserDto.password, 10);

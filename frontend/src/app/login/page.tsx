@@ -10,9 +10,23 @@ import { useAuthStore } from '@/store/authStore';
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { message } = App.useApp();
+  const [form] = Form.useForm();
 
   const loginStore = useAuthStore((state) => state.login);
   const router = useRouter();
+
+  // Khôi phục email đã lưu nếu có kích hoạt Ghi nhớ đăng nhập
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const rememberedEmail = localStorage.getItem('remembered_email');
+      if (rememberedEmail) {
+        form.setFieldsValue({
+          email: rememberedEmail,
+          remember: true,
+        });
+      }
+    }
+  }, [form]);
 
   const onFinish = async (values: any) => {
     setLoading(true);
@@ -22,13 +36,25 @@ export default function LoginPage() {
         email: values.email,
         password: values.password,
       });
-      const { user, permissions, access_token } = res.data;
+      const { user, permissions, access_token, refresh_token } = res.data;
 
       // Lưu vào Zustand và localStorage
-      loginStore(user, permissions, access_token);
+      loginStore(user, permissions, access_token, refresh_token);
       localStorage.setItem('access_token', access_token);
+      if (refresh_token) {
+        localStorage.setItem('refresh_token', refresh_token);
+      }
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('permissions', JSON.stringify(permissions));
+
+      // Xử lý Logic Ghi nhớ đăng nhập (Remember Me)
+      if (values.remember) {
+        localStorage.setItem('remembered_email', values.email);
+        localStorage.setItem('remember_me', 'true');
+      } else {
+        localStorage.removeItem('remembered_email');
+        localStorage.removeItem('remember_me');
+      }
 
       message.success('Đăng nhập thành công!');
 
@@ -167,7 +193,7 @@ export default function LoginPage() {
             viewBox="0 0 1440 140"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-24 md:h-36 text-[#f8fafc] fill-current"
+            className="w-full h-24 md:h-36 text-[#f8fafc] dark:text-slate-950 fill-current"
             preserveAspectRatio="none"
           >
             <path d="M 0,38 C 220,70 480,135 690,135 C 920,135 1200,60 1440,12 L 1440,140 L 0,140 Z" />
@@ -176,68 +202,30 @@ export default function LoginPage() {
       </div>
 
       {/* Login Card Container */}
-      <div className="relative z-10 w-full max-w-[430px] bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-slate-100/90 p-8 sm:p-10 my-auto">
+      <div className="relative z-10 w-full max-w-[430px] bg-white dark:bg-slate-900 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-slate-100/90 dark:border-slate-800 p-8 sm:p-10 my-auto">
         {/* Brand Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-6">
-          <svg
-            width="36"
-            height="36"
-            viewBox="0 0 44 44"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="shrink-0"
-          >
-            {/* Hexagon Border */}
-            <path
-              d="M22 4L37.5885 13V31L22 40L6.41154 31V13L22 4Z"
-              stroke="#0f766e"
-              strokeWidth="2.5"
-              strokeLinejoin="round"
-              fill="#f0fdfa"
-            />
-            {/* Growth Graph Arrow */}
-            <path
-              d="M15 25.5L20.5 20L24.5 24L30 17"
-              stroke="#0d9488"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M26 17H30V21"
-              stroke="#0d9488"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            {/* Node Dots on Vertices */}
-            <circle cx="22" cy="4" r="3" fill="#2563eb" />
-            <circle cx="37.6" cy="13" r="3" fill="#ea580c" />
-            <circle cx="37.6" cy="31" r="3" fill="#dc2626" />
-            <circle cx="22" cy="40" r="3" fill="#f59e0b" />
-            <circle cx="6.4" cy="31" r="3" fill="#0d9488" />
-            <circle cx="6.4" cy="13" r="3" fill="#3b82f6" />
-          </svg>
-          <span className="text-[25px] font-bold tracking-tight text-slate-800">
-            BizSocial <span className="font-extrabold text-slate-900">ERP</span>
+          <img src="/BizSocial_Logo_1.png" alt="BizSocial ERP Logo" className="w-8 h-9 object-contain rounded-xl shrink-0" />
+          <span className="text-[25px] font-bold tracking-tight text-slate-800 dark:text-white">
+            BizSocial <span className="font-extrabold text-slate-900 dark:text-white">ERP</span>
           </span>
         </div>
 
         {/* Header Titles */}
         <div className="text-center mb-6">
-          <h1 className="text-[22px] font-bold text-slate-800 tracking-tight mb-1">
+          <h1 className="text-[22px] font-bold text-slate-800 dark:text-white tracking-tight mb-1">
             Chào mừng trở lại!
           </h1>
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
             Đăng nhập vào tài khoản BizSocial ERP của bạn
           </p>
         </div>
 
         {/* Login Form */}
-        <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
+        <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false}>
           {/* Email Address */}
           <div className="mb-1.5">
-            <label className="text-sm font-semibold text-slate-700">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               Địa chỉ Email
             </label>
           </div>
@@ -258,13 +246,13 @@ export default function LoginPage() {
 
           {/* Password */}
           <div className="flex justify-between items-center mb-1.5">
-            <label className="text-sm font-semibold text-slate-700">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               Mật khẩu
             </label>
             <button
               type="button"
               onClick={() => message.info('Vui lòng liên hệ Quản trị viên để đặt lại mật khẩu!')}
-              className="text-xs sm:text-sm font-medium text-teal-600 hover:text-teal-700 hover:underline cursor-pointer bg-transparent border-0 p-0"
+              className="text-xs sm:text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-700 hover:underline cursor-pointer bg-transparent border-0 p-0"
             >
               Quên mật khẩu?
             </button>
@@ -284,7 +272,7 @@ export default function LoginPage() {
 
           {/* Remember me */}
           <Form.Item name="remember" valuePropName="checked" className="!mb-5">
-            <Checkbox className="text-slate-500 text-sm font-normal select-none">
+            <Checkbox className="text-slate-500 dark:text-slate-400 text-sm font-normal select-none">
               Ghi nhớ đăng nhập
             </Checkbox>
           </Form.Item>

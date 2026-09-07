@@ -30,4 +30,12 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   password?: string;
+
+  @IsString()
+  @IsOptional()
+  avatar?: string;
+
+  @IsString()
+  @IsOptional()
+  coverImage?: string;
 }

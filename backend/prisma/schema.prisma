@@ -13,6 +13,8 @@ model User {
   password     String
   name         String?
   phone        String?
+  avatar       String?     @db.LongText
+  coverImage   String?     @db.LongText
   roleId       Int
   role         Role        @relation(fields: [roleId], references: [id])
   departmentId Int?
@@ -23,6 +25,7 @@ model User {
   ledTeams     Team[]                  @relation("TeamLeader")
   permissions  Permission[]
   transferLogs DepartmentTransferLog[] @relation("UserTransferLogs")
+  notifications Notification[]
   createdAt    DateTime                @default(now())
   updatedAt    DateTime     @updatedAt
   deletedAt    DateTime?
@@ -49,20 +52,50 @@ model Module {
   deletedAt   DateTime?
 }
 
+enum ScopeLevel {
+  PERSONAL
+  TEAM
+  DEPARTMENT
+  GLOBAL
+}
+
+enum AccessLevel {
+  CAN_VIEW
+  CAN_EDIT
+  CAN_APPROVE
+  FULL_CONTROL
+}
+
 model Permission {
-  id        Int       @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   roleId    Int?
   userId    Int?
   moduleId  Int
-  action    String    // "CREATE", "READ", "UPDATE", "DELETE", "APPROVE"
-  role      Role?     @relation(fields: [roleId], references: [id])
-  user      User?     @relation(fields: [userId], references: [id])
-  module    Module    @relation(fields: [moduleId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  action    String     // "CREATE", "READ", "UPDATE", "DELETE", "APPROVE"
+  scope     ScopeLevel @default(PERSONAL)
+  role      Role?      @relation(fields: [roleId], references: [id])
+  user      User?      @relation(fields: [userId], references: [id])
+  module    Module     @relation(fields: [moduleId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   deletedAt DateTime?
 
   @@unique([roleId, userId, moduleId, action])
+}
+
+model ResourceAccessShare {
+  id           Int         @id @default(autoincrement())
+  resourceType String      // 'Social', 'CRM', 'Recruiting', 'TeamPosts'
+  resourceId   String      // ID bài viết, ID lead hoặc ID team
+  sharedWithId Int         // ID User hoặc ID Team được nhận quyền
+  sharedType   String      @default("USER") // "USER" hoặc "TEAM"
+  accessLevel  AccessLevel @default(CAN_VIEW)
+  expireAt     DateTime?   // Hạn ủy quyền tạm thời
+  createdById  Int?        // Người thực hiện chia sẻ/ủy quyền
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([resourceType, resourceId, sharedWithId])
 }
 
 model Department {
@@ -108,5 +141,30 @@ model DepartmentTransferLog {
   changedById   Int?
   changedByName String?
   createdAt     DateTime @default(now())
+}
+
+model SecurityAuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  userName  String?
+  action    String   // e.g. MATRIX_UPDATE, ROLE_CREATE, ROLE_UPDATE, ROLE_DELETE, DAC_GRANT, DAC_REVOKE
+  details   String   @db.Text
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  desc      String   @db.Text
+  type      String   @default("system") // "approval", "crm", "badge", "system", "meeting"
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId, read])
 }
 

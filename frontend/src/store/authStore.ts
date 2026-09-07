@@ -5,6 +5,9 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  phone?: string;
+  avatar?: string;
+  coverImage?: string;
   roleId: number;
   roleName?: string;
   departmentId?: number;
@@ -21,10 +24,12 @@ interface AuthState {
   user: User | null;
   permissions: Permission[];
   token: string | null;
+  refreshToken: string | null;
   _hasHydrated: boolean;
   setHasHydrated: (val: boolean) => void;
-  login: (user: User, permissions: Permission[], token: string) => void;
+  login: (user: User, permissions: Permission[], token: string, refreshToken?: string) => void;
   logout: () => void;
+  updateUser: (partialUser: Partial<User>) => void;
   canReadModule: (moduleName: string) => boolean;
   canDoAction: (moduleName: string, action: string) => boolean;
   hasPermission: (moduleId: number, action: string) => boolean;
@@ -36,24 +41,38 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       permissions: [],
       token: null,
+      refreshToken: null,
       _hasHydrated: false,
       setHasHydrated: (val: boolean) => set({ _hasHydrated: val }),
-      login: (user, permissions, token) => {
+      login: (user, permissions, token, refreshToken) => {
         if (typeof window !== 'undefined') {
           localStorage.setItem('access_token', token);
+          if (refreshToken) {
+            localStorage.setItem('refresh_token', refreshToken);
+          }
           localStorage.setItem('user', JSON.stringify(user));
           localStorage.setItem('permissions', JSON.stringify(permissions));
         }
-        set({ user, permissions, token, _hasHydrated: true });
+        set({ user, permissions, token, refreshToken: refreshToken || get().refreshToken, _hasHydrated: true });
       },
       logout: () => {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
           localStorage.removeItem('user');
           localStorage.removeItem('permissions');
           localStorage.removeItem('bizsocial-auth-storage');
         }
-        set({ user: null, permissions: [], token: null, _hasHydrated: true });
+        set({ user: null, permissions: [], token: null, refreshToken: null, _hasHydrated: true });
+      },
+      updateUser: (partialUser: Partial<User>) => {
+        const { user } = get();
+        if (!user) return;
+        const updatedUser = { ...user, ...partialUser };
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
+        set({ user: updatedUser });
       },
       canReadModule: (moduleName: string) => {
         const { user, permissions } = get();
