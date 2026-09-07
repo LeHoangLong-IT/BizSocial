@@ -1,166 +1,373 @@
 "use client";
 
-import React from 'react';
-import { Typography, Row, Col, Card, Button, Avatar, Progress, Table, Space, Tag } from 'antd';
-import { 
-  DownloadOutlined, 
-  PlusOutlined, 
-  TeamOutlined, 
-  CalendarOutlined, 
-  CheckCircleOutlined, 
-  DollarOutlined,
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import {
+  Typography,
+  Row,
+  Col,
+  Card,
+  Button,
+  Avatar,
+  Tag,
+  Spin,
+  Progress,
+} from 'antd';
+import {
+  PlusOutlined,
+  TeamOutlined,
+  CheckCircleOutlined,
   UsergroupAddOutlined,
-  RightOutlined
+  ReloadOutlined,
+  CrownOutlined,
+  ApartmentOutlined,
+  AuditOutlined,
+  RightOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import {
-  PieChart, Pie, Cell, Tooltip as RechartsTooltip,
-  BarChart, Bar, XAxis, ResponsiveContainer,
-  LineChart, Line
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
 } from 'recharts';
 
 const { Title, Text } = Typography;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-// Mock Data cho Charts
-const donutData = [
-  { name: 'Engineering', value: 488, color: '#0ea5e9' },
-  { name: 'Marketing', value: 282, color: '#f43f5e' },
-  { name: 'Finance', value: 231, color: '#10b981' },
-  { name: 'Sales', value: 180, color: '#f59e0b' },
-  { name: 'HR', value: 103, color: '#8b5cf6' },
-];
-
-const barData = [
-  { name: 'Mon', value: 80 },
-  { name: 'Tue', value: 85 },
-  { name: 'Wed', value: 90 },
-  { name: 'Thu', value: 60 },
-  { name: 'Fri', value: 100 },
-  { name: 'Sat', value: 50 },
-  { name: 'Sun', value: 40 },
-];
-
-const lineData = [
-  { name: 'Jan', value: 1100 },
-  { name: 'Feb', value: 1150 },
-  { name: 'Mar', value: 1130 },
-  { name: 'Apr', value: 1200 },
-  { name: 'May', value: 1180 },
-  { name: 'Jun', value: 1248 },
-];
+interface DashboardStats {
+  summary: {
+    totalUsers: number;
+    activeUsers: number;
+    inactiveUsers: number;
+    departmentsCount: number;
+    teamsCount: number;
+    rolesCount: number;
+    attendanceRate: number;
+  };
+  departmentDistribution: { name: string; value: number; color: string }[];
+  roleDistribution: { name: string; count: number }[];
+  recentUsers: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    department: string;
+    team: string;
+    createdAt: string;
+  }[];
+  recentLogs: {
+    id: number;
+    userId: number;
+    fromDept: string;
+    toDept: string;
+    reason: string;
+    changedByName: string;
+    createdAt: string;
+  }[];
+}
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user } = useAuthStore();
-  const userName = user?.name?.split(' ')[0] || 'Andrew';
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const fetchDashboardStats = async () => {
+    setLoading(true);
+    try {
+      const token =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('access_token') || localStorage.getItem('token')
+          : null;
+      const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await axios.get(`${API_BASE}/dashboard/stats`, {
+        headers: authHeader,
+      });
+      if (res.data) {
+        setStats(res.data);
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải dữ liệu Dashboard từ DB:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const userName = user?.name || user?.email?.split('@')[0] || 'Quản trị viên';
+  const userRole = (user as any)?.role?.name || 'Super Admin';
+
+  if (loading && !stats) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px] gap-3">
+        <Spin size="large" />
+        <Text className="text-slate-400 text-sm font-medium">
+          Đang kết nối CSDL MySQL và tải dữ liệu Dashboard ERP...
+        </Text>
+      </div>
+    );
+  }
+
+  const summary = stats?.summary || {
+    totalUsers: 0,
+    activeUsers: 0,
+    inactiveUsers: 0,
+    departmentsCount: 0,
+    teamsCount: 0,
+    rolesCount: 0,
+    attendanceRate: 98.4,
+  };
+
+  // Executive Harmonious Color Palette (No Neon)
+  const corporatePalette = ['#3b82f6', '#10b981', '#6366f1', '#f59e0b', '#8b5cf6', '#0284c7', '#ec4899'];
+
+  const deptData = stats?.departmentDistribution?.length
+    ? stats.departmentDistribution.map((d, i) => ({
+      ...d,
+      color: corporatePalette[i % corporatePalette.length],
+    }))
+    : [
+      { name: 'Khối Kỹ Thuật', value: 1, color: '#3b82f6' },
+      { name: 'Khối Marketing', value: 1, color: '#10b981' },
+    ];
+
+  const roleData = stats?.roleDistribution || [];
 
   return (
-    <div className="max-w-[1600px] mx-auto">
-      {/* Header Section */}
-      <div className="flex justify-between items-end mb-6">
-        <div>
-          <Title level={3} className="!mb-1 font-semibold text-gray-800">
-            Good morning, {userName} <span className="text-2xl">👋</span>
-          </Title>
-          <Text className="text-gray-500">
-            You have 7 leave requests and 2 urgent alerts pending.
-          </Text>
-        </div>
-        <div className="flex gap-3">
-          <Button icon={<DownloadOutlined />} className="rounded-lg font-medium text-gray-600 border-gray-200">
-            Export <RightOutlined className="text-[10px] ml-1 rotate-90" />
-          </Button>
-          <Button type="primary" className="bg-[#1e293b] hover:bg-slate-700 rounded-lg font-medium border-0" icon={<PlusOutlined />}>
-            Add Employee
-          </Button>
-        </div>
-      </div>
+    <div className="max-w-[1600px] mx-auto space-y-6">
 
-      <Row gutter={[20, 20]}>
-        {/* Total Workforce */}
-        <Col xs={24} lg={8}>
-          <Card variant="borderless" className="shadow-sm rounded-xl h-full" styles={{ body: { padding: '24px' } }}>
-            <div className="flex justify-between items-start mb-6">
+
+      {/* 📊 4 KPI SUMMARY CARDS */}
+      <Row gutter={[16, 16]}>
+        {/* KPI 1: Total Users */}
+        <Col xs={24} sm={12} lg={6}>
+          <Card
+            variant="borderless"
+            onClick={() => router.push('/users')}
+            className="shadow-2xs rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 h-full cursor-pointer hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all group"
+            styles={{ body: { padding: '20px' } }}
+          >
+            <div className="flex items-start justify-between">
               <div>
-                <Text className="font-semibold text-gray-800 text-base block mb-2">Total Workforce</Text>
-                <div className="flex items-end gap-3">
-                  <span className="text-4xl font-bold text-gray-800">1,284</span>
-                  <Tag color="success" className="mb-1 rounded-md bg-green-50 text-green-600 border-0 flex items-center px-2 py-0.5">
-                    <span className="text-xs font-semibold">↗ 12 new this month</span>
-                  </Tag>
+                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase block mb-1 group-hover:text-indigo-600 transition-colors">
+                  TỔNG SỐ NHÂN SỰ
+                </span>
+                <span className="text-3xl font-black text-slate-900 dark:text-white block">
+                  {summary.totalUsers}
+                </span>
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>Hoạt động: {summary.activeUsers} tài khoản</span>
                 </div>
-                <Text className="text-gray-400 text-xs mt-1 block">Active employees across 7 departments</Text>
               </div>
-              <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                <TeamOutlined className="text-lg" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mt-8">
-              <div className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center text-white">
-                    <CalendarOutlined />
-                  </div>
-                  <Tag color="success" className="bg-green-50 text-green-600 border-0 text-[10px] font-bold m-0">↗ 3.64%</Tag>
-                </div>
-                <Text className="text-gray-500 text-xs block mb-1">On Leave Today</Text>
-                <span className="text-xl font-bold text-gray-800">23</span>
-              </div>
-              <div className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-white">
-                    <CheckCircleOutlined />
-                  </div>
-                  <Tag color="success" className="bg-green-50 text-green-600 border-0 text-[10px] font-bold m-0">↗ 3.64%</Tag>
-                </div>
-                <Text className="text-gray-500 text-xs block mb-1">Attendance Rate</Text>
-                <span className="text-xl font-bold text-gray-800">94.2%</span>
-              </div>
-              <div className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center text-white">
-                    <UsergroupAddOutlined />
-                  </div>
-                  <Tag color="success" className="bg-green-50 text-green-600 border-0 text-[10px] font-bold m-0">↗ 3.64%</Tag>
-                </div>
-                <Text className="text-gray-500 text-xs block mb-1">Open Positions</Text>
-                <span className="text-xl font-bold text-gray-800">47</span>
-              </div>
-              <div className="border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center text-white">
-                    <DollarOutlined />
-                  </div>
-                  <Tag color="success" className="bg-green-50 text-green-600 border-0 text-[10px] font-bold m-0">↗ 3.64%</Tag>
-                </div>
-                <Text className="text-gray-500 text-xs block mb-1">Monthly Payroll</Text>
-                <span className="text-xl font-bold text-gray-800">$1,248K</span>
+              <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xl shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950 group-hover:text-indigo-600 transition-colors">
+                <TeamOutlined />
               </div>
             </div>
           </Card>
         </Col>
 
-        {/* Employee Distribution */}
-        <Col xs={24} lg={8}>
-          <Card variant="borderless" className="shadow-sm rounded-xl h-full flex flex-col" styles={{ body: { padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' } }}>
-            <div className="flex justify-between items-center mb-6">
-              <Text className="font-semibold text-gray-800 text-base">Employee Distribution</Text>
-              <Tag className="rounded-full bg-green-50 text-green-600 border-0 px-3 font-medium">Live</Tag>
+        {/* KPI 2: Departments */}
+        <Col xs={24} sm={12} lg={6}>
+          <Card
+            variant="borderless"
+            onClick={() => router.push('/organization')}
+            className="shadow-2xs rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 h-full cursor-pointer hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all group"
+            styles={{ body: { padding: '20px' } }}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase block mb-1 group-hover:text-indigo-600 transition-colors">
+                  PHÒNG BAN & ĐỘI NHÓM
+                </span>
+                <span className="text-3xl font-black text-slate-900 dark:text-white block">
+                  {summary.departmentsCount}
+                </span>
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                  <span>Trực thuộc {summary.teamsCount} Teams chuyên môn</span>
+                </div>
+              </div>
+              <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950 transition-colors">
+                <ApartmentOutlined />
+              </div>
             </div>
-            
-            <div className="flex items-center justify-between mt-2 mb-8">
-              <div className="w-40 h-40 relative">
+          </Card>
+        </Col>
+
+        {/* KPI 3: Roles & Permissions */}
+        <Col xs={24} sm={12} lg={6}>
+          <Card
+            variant="borderless"
+            onClick={() => router.push('/roles')}
+            className="shadow-2xs rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 h-full cursor-pointer hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all group"
+            styles={{ body: { padding: '20px' } }}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase block mb-1 group-hover:text-amber-600 transition-colors">
+                  VAI TRÒ & PHÂN QUYỀN
+                </span>
+                <span className="text-3xl font-black text-slate-900 dark:text-white block">
+                  {summary.rolesCount}
+                </span>
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span>RBAC 5 Roles Matrix Active</span>
+                </div>
+              </div>
+              <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0 group-hover:bg-amber-50 dark:group-hover:bg-amber-950 transition-colors">
+                <CrownOutlined />
+              </div>
+            </div>
+          </Card>
+        </Col>
+
+        {/* KPI 4: Attendance Rate */}
+        <Col xs={24} sm={12} lg={6}>
+          <Card
+            variant="borderless"
+            onClick={() => router.push('/profile')}
+            className="shadow-2xs rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 h-full cursor-pointer hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all group"
+            styles={{ body: { padding: '20px' } }}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase block mb-1 group-hover:text-sky-600 transition-colors">
+                  TỶ LỆ ĐIỂM DANH HOẠT ĐỘNG
+                </span>
+                <span className="text-3xl font-black text-slate-900 dark:text-white block">
+                  {summary.attendanceRate}%
+                </span>
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-sky-600 dark:text-sky-400 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-sky-500" />
+                  <span>Hiệu suất hoạt động cao</span>
+                </div>
+              </div>
+              <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xl shrink-0 group-hover:bg-sky-50 dark:group-hover:bg-sky-950 transition-colors">
+                <CheckCircleOutlined />
+              </div>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 📈 ROW 2: MAIN ANALYTICS CHARTS (16 / 10 GRID) */}
+      <Row gutter={[16, 16]}>
+        {/* Roles Distribution Bar Chart (Col 16) */}
+        <Col xs={24} lg={16}>
+          <Card
+            variant="borderless"
+            className="shadow-2xs rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 h-full flex flex-col"
+            styles={{ body: { padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' } }}
+          >
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="font-extrabold text-slate-900 dark:text-white text-base m-0">
+                  Phân Bổ Quyền Hạn Theo Vai Trò (RBAC Roles)
+                </h3>
+                <p className="text-slate-400 text-xs m-0 mt-1">
+                  Thống kê số lượng nhân sự được phân bổ theo 5 cấp bậc quản trị trong CSDL
+                </p>
+              </div>
+              <Button
+                type="text"
+                size="small"
+                onClick={() => router.push('/roles')}
+                className="text-indigo-600 dark:text-indigo-400 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Quản lý Vai trò <RightOutlined className="text-[10px]" />
+              </Button>
+            </div>
+
+            <div className="h-64 w-full my-auto">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={roleData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                  />
+                  <RechartsTooltip
+                    cursor={{ fill: 'rgba(255, 255, 255, 0.06)', radius: 8 }}
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderRadius: '12px',
+                      color: '#fff',
+                      border: '1px solid #1e293b',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+                    }}
+                  />
+                  <Bar dataKey="count" fill="#4f46e5" radius={[8, 8, 0, 0]} barSize={32} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+              <div className="flex items-center gap-2">
+                <SafetyCertificateOutlined className="text-indigo-600" />
+                <span>Cơ chế bảo mật 5 Permissions: CREATE, READ, UPDATE, DELETE, APPROVE</span>
+              </div>
+              <span className="font-bold text-slate-800 dark:text-slate-200">
+                {summary.rolesCount} Roles Hợp Lệ
+              </span>
+            </div>
+          </Card>
+        </Col>
+
+        {/* Department Distribution Donut Chart (Col 8) */}
+        <Col xs={24} lg={8}>
+          <Card
+            variant="borderless"
+            className="shadow-2xs rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 h-full flex flex-col"
+            styles={{ body: { padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' } }}
+          >
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="font-extrabold text-slate-900 dark:text-white text-base m-0">
+                  Cơ Cấu Phòng Ban
+                </h3>
+                <p className="text-slate-400 text-xs m-0 mt-1">
+                  Tỷ lệ phân bổ nhân sự giữa các Khối phòng ban
+                </p>
+              </div>
+              <Tag color="default" className="rounded-full px-3 font-semibold border-slate-200 text-slate-600">
+                Tổ chức CSDL
+              </Tag>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 my-auto">
+              <div className="w-44 h-44 relative shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={donutData}
+                      data={deptData}
                       innerRadius={55}
                       outerRadius={75}
-                      paddingAngle={2}
+                      paddingAngle={3}
                       dataKey="value"
                       stroke="none"
                     >
-                      {donutData.map((entry, index) => (
+                      {deptData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -168,202 +375,169 @@ export default function DashboardPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-xl font-bold text-gray-800 leading-none mb-1">1,284</span>
-                  <span className="text-[10px] text-gray-400">Employees</span>
+                  <span className="text-2xl font-black text-slate-900 dark:text-white leading-none mb-1">
+                    {summary.totalUsers}
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-bold">Nhân Sự</span>
                 </div>
               </div>
-              
-              <div className="flex flex-col gap-3">
-                {donutData.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between gap-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                      <Text className="text-gray-500 text-xs">{item.name}</Text>
+
+              <div className="flex-1 w-full space-y-2 max-h-48 overflow-y-auto pr-1">
+                {deptData.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between gap-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-slate-700 dark:text-slate-200 text-xs font-semibold truncate">
+                        {item.name}
+                      </span>
                     </div>
-                    <Text className="text-gray-800 font-semibold text-xs">{item.value}</Text>
+                    <span className="text-slate-900 dark:text-white font-extrabold text-xs shrink-0">
+                      {item.value} nhân sự
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="mt-auto grid grid-cols-3 gap-2 text-center border-t border-gray-100 pt-6">
-              <div>
-                <span className="text-xl font-bold text-gray-800 block">1196</span>
-                <span className="text-gray-400 text-xs">Active</span>
-              </div>
-              <div className="border-l border-gray-100">
-                <span className="text-xl font-bold text-gray-800 block">88</span>
-                <span className="text-gray-400 text-xs">Inactive</span>
-              </div>
-              <div className="border-l border-gray-100">
-                <span className="text-xl font-bold text-gray-800 block">12</span>
-                <span className="text-gray-400 text-xs">On Leave</span>
-              </div>
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
+              <span className="text-slate-400">Xem sơ đồ tổ chức cây:</span>
+              <Button
+                type="link"
+                onClick={() => router.push('/organization')}
+                className="text-indigo-600 dark:text-indigo-400 font-bold text-xs p-0 cursor-pointer"
+              >
+                Sơ Đồ Tổ Chức (Org Chart) →
+              </Button>
             </div>
           </Card>
         </Col>
+      </Row>
 
-        {/* Attendance Summary */}
-        <Col xs={24} lg={8}>
-          <Card variant="borderless" className="shadow-sm rounded-xl h-full" styles={{ body: { padding: '24px' } }}>
-            <div className="flex justify-between items-center mb-6">
-              <Text className="font-semibold text-gray-800 text-base">Attendance Summary</Text>
-              <Button size="small" type="text" className="text-gray-500 font-medium text-xs">View Logs <RightOutlined className="text-[10px]"/></Button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="bg-gray-50/50 rounded-lg p-3">
-                <Text className="text-gray-400 text-xs block mb-1">Present</Text>
-                <span className="text-xl font-bold text-gray-800 block mb-1">1209</span>
-                <Text className="text-gray-500 text-[10px]">94.2% of workforce</Text>
-              </div>
-              <div className="bg-gray-50/50 rounded-lg p-3">
-                <Text className="text-gray-400 text-xs block mb-1">Late</Text>
-                <span className="text-xl font-bold text-gray-800 block mb-1">78</span>
-                <Text className="text-gray-500 text-[10px]">After 9:30 AM</Text>
-              </div>
-              <div className="bg-gray-50/50 rounded-lg p-3">
-                <Text className="text-gray-400 text-xs block mb-1">Absent</Text>
-                <span className="text-xl font-bold text-gray-800 block mb-1">52</span>
-                <Text className="text-gray-500 text-[10px]">Unplanned absence</Text>
-              </div>
-              <div className="bg-gray-50/50 rounded-lg p-3">
-                <Text className="text-gray-400 text-xs block mb-1">Remote</Text>
-                <span className="text-xl font-bold text-gray-800 block mb-1">361</span>
-                <Text className="text-gray-500 text-[10px]">WFH approved</Text>
-              </div>
-            </div>
-
-            <Text className="font-semibold text-gray-800 text-sm block mb-4">Weekly Attendance Trend</Text>
-            <div className="h-32 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
-                  <RechartsTooltip cursor={{fill: '#f3f4f6'}} />
-                  <Bar dataKey="value" fill="#14b8a6" radius={[4, 4, 4, 4]} barSize={16}>
-                    {barData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.name === 'Thu' ? '#f97316' : '#14b8a6'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </Col>
-
-        {/* Row 2: Payroll & Recruitment */}
+      {/* 📋 ROW 3: RECENT AUDIT LOGS & NEW MEMBERS (12 / 12 EQUAL GRID) */}
+      <Row gutter={[16, 16]}>
+        {/* Audit Logs (Col 12) */}
         <Col xs={24} lg={12}>
-          <div className="bg-[#1e293b] rounded-xl p-6 h-full flex flex-col text-white relative overflow-hidden shadow-md">
-            <div className="flex justify-between items-start relative z-10 mb-8">
+          <Card
+            variant="borderless"
+            className="shadow-2xs rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900"
+            styles={{ body: { padding: '24px' } }}
+          >
+            <div className="flex justify-between items-center mb-5">
               <div>
-                <Text className="text-slate-300 text-sm block mb-1">Monthly Payroll</Text>
-                <span className="text-4xl font-bold text-white block mb-1">$1,248K</span>
-                <Text className="text-slate-400 text-xs">March 2026 - 1,196 employees</Text>
+                <h3 className="font-extrabold text-slate-900 dark:text-white text-base m-0 flex items-center gap-2">
+                  <AuditOutlined className="text-indigo-600" />
+                  <span>Nhật Ký Điều Chuyển Công Tác Mới Nhất</span>
+                </h3>
               </div>
-              <Button className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white rounded-lg backdrop-blur-sm" icon={<DownloadOutlined />}>
-                Download Payslip
+              <Button
+                type="text"
+                size="small"
+                onClick={() => router.push('/organization')}
+                className="text-indigo-600 dark:text-indigo-400 font-bold text-xs cursor-pointer"
+              >
+                Xem chi tiết →
               </Button>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 relative z-10 mb-8">
-              <div>
-                <Text className="text-slate-300 text-xs block mb-1">Avg Salary</Text>
-                <span className="text-xl font-bold text-white">$1,285.3K</span>
-              </div>
-              <div>
-                <Text className="text-slate-300 text-xs block mb-1">Last Month</Text>
-                <span className="text-xl font-bold text-white">$1,196K</span>
-              </div>
-              <div>
-                <Text className="text-slate-300 text-xs block mb-1">MOM Growth</Text>
-                <span className="text-xl font-bold text-white">4.2%</span>
-              </div>
-            </div>
-
-            <div className="mt-auto relative z-10">
-              <Text className="text-slate-300 text-sm font-semibold block mb-4">6-Month Payroll Trend</Text>
-              <div className="h-24 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={lineData}>
-                    <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} dot={false} />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            
-            {/* Background decoration */}
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-slate-700/30 rounded-full blur-3xl pointer-events-none"></div>
-          </div>
-        </Col>
-
-        <Col xs={24} lg={12}>
-          <Card variant="borderless" className="shadow-sm rounded-xl h-full" styles={{ body: { padding: '24px' } }}>
-            <div className="flex justify-between items-center mb-6">
-              <Text className="font-semibold text-gray-800 text-base">Recruitment Pipeline</Text>
-              <Button size="small" className="rounded-md font-medium text-gray-600">
-                <PlusOutlined className="text-xs" /> Post New Job
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="border border-gray-100 rounded-lg p-3 flex gap-3 relative overflow-hidden">
-                <div className="w-10 h-10 bg-gray-50 rounded-md flex items-center justify-center text-gray-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <div className="space-y-3">
+              {!stats?.recentLogs || stats.recentLogs.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-xs font-medium">
+                  Chưa có lịch sử điều chuyển công tác nào được ghi nhận.
                 </div>
-                <div>
-                  <span className="text-xl font-bold text-gray-800 block leading-tight">47</span>
-                  <span className="text-[10px] text-gray-500">New Applicants</span>
-                </div>
-                <div className="absolute bottom-0 left-0 h-1 bg-emerald-500 w-full"></div>
-              </div>
-              <div className="border border-gray-100 rounded-lg p-3 flex gap-3 relative overflow-hidden">
-                <div className="w-10 h-10 bg-gray-50 rounded-md flex items-center justify-center text-gray-400">
-                  <UsergroupAddOutlined className="text-lg" />
-                </div>
-                <div>
-                  <span className="text-xl font-bold text-gray-800 block leading-tight">23</span>
-                  <span className="text-[10px] text-gray-500">Screening</span>
-                </div>
-                <div className="absolute bottom-0 left-0 h-1 bg-indigo-500 w-full"></div>
-              </div>
-              <div className="border border-gray-100 rounded-lg p-3 flex gap-3 relative overflow-hidden">
-                <div className="w-10 h-10 bg-gray-50 rounded-md flex items-center justify-center text-gray-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                </div>
-                <div>
-                  <span className="text-xl font-bold text-gray-800 block leading-tight">12</span>
-                  <span className="text-[10px] text-gray-500">Interviews</span>
-                </div>
-                <div className="absolute bottom-0 left-0 h-1 bg-blue-500 w-full"></div>
-              </div>
-            </div>
-
-            <Text className="font-semibold text-gray-800 text-sm block mb-4">Recent Candidates</Text>
-            <div className="flex flex-col gap-3">
-              {[
-                { name: 'Alex Thompson', role: 'Senior Developer', status: 'Interview', color: 'pink' },
-                { name: 'Maria Garcia', role: 'UX Designer', status: 'Applied', color: 'orange' },
-                { name: 'Thomas Mervin', role: 'Senior Developer', status: 'Offer Made', color: 'purple' },
-                { name: 'Regina Bryant', role: 'Android Developer', status: 'Hired', color: 'green' },
-              ].map((c, i) => (
-                <div key={i} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <Avatar src={`https://api.dicebear.com/7.x/notionists/svg?seed=${c.name}`} className="bg-gray-100" />
-                    <div className="leading-tight">
-                      <Text strong className="text-sm block">{c.name}</Text>
-                      <Text className="text-xs text-gray-400">{c.role}</Text>
+              ) : (
+                stats.recentLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex items-start justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-extrabold text-xs text-slate-900 dark:text-slate-100">
+                          Nhân sự #{log.userId}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80">
+                          {log.fromDept} → {log.toDept}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-1.5 truncate">
+                        Lý do: {log.reason}
+                      </p>
                     </div>
+                    <span className="text-[10px] font-medium text-slate-400 dark:text-slate-400 shrink-0">
+                      bởi {log.changedByName}
+                    </span>
                   </div>
-                  <Tag color={c.color} className="rounded-full px-3 border-0 bg-opacity-20 font-medium m-0">
-                    {c.status}
-                  </Tag>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </Card>
         </Col>
 
+        {/* New Registered Members (Col 12) */}
+        <Col xs={24} lg={12}>
+          <Card
+            variant="borderless"
+            className="shadow-2xs rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900"
+            styles={{ body: { padding: '24px' } }}
+          >
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h3 className="font-extrabold text-slate-900 dark:text-white text-base m-0 flex items-center gap-2">
+                  <UsergroupAddOutlined className="text-emerald-600" />
+                  <span>Danh Sách Nhân Sự Mới Gia Nhập</span>
+                </h3>
+              </div>
+              <Button
+                type="text"
+                size="small"
+                onClick={() => router.push('/users')}
+                className="text-indigo-600 dark:text-indigo-400 font-bold text-xs cursor-pointer"
+              >
+                Quản lý User →
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {!stats?.recentUsers || stats.recentUsers.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-xs font-medium">
+                  Chưa có nhân sự nào trong danh sách.
+                </div>
+              ) : (
+                stats.recentUsers.map((u) => (
+                  <div
+                    key={u.id}
+                    className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar
+                        src={`https://api.dicebear.com/7.x/notionists/svg?seed=${u.name}`}
+                        className="bg-slate-200 dark:bg-slate-700 shrink-0"
+                      />
+                      <div className="min-w-0 leading-tight">
+                        <span className="font-bold text-xs block text-slate-900 dark:text-slate-100 truncate">
+                          {u.name}
+                        </span>
+                        <span className="text-[11px] text-slate-400 truncate block mt-0.5">
+                          {u.email} • {u.department}
+                        </span>
+                      </div>
+                    </div>
+
+                    <span className="rounded-full px-3 py-1 font-bold text-[11px] shrink-0 m-0 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/80">
+                      {u.role}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+        </Col>
       </Row>
     </div>
   );
