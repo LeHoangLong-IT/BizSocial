@@ -2,7 +2,9 @@ import React from 'react';
 import { App, Tooltip, Badge, Dropdown, Button } from 'antd';
 import { MoonOutlined, SunOutlined, SearchOutlined, BellOutlined } from '@ant-design/icons';
 import { UserDropdownContent } from './UserDropdownContent';
+import { NotificationCenter } from './NotificationCenter';
 import { useThemeStore } from '@/store/themeStore';
+import { useNotificationStore } from '@/store/notificationStore';
 
 interface HeaderActionsProps {
   user: any;
@@ -21,6 +23,9 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
 }) => {
   const { message } = App.useApp();
   const { isDarkMode, toggleTheme } = useThemeStore();
+  const { notifications } = useNotificationStore();
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleToggleTheme = () => {
     toggleTheme();
@@ -59,16 +64,17 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
         </button>
 
         {/* Nút Thông báo */}
-        <Badge dot offset={[-2, 4]} color="#ef4444">
-          <button
-            type="button"
-            onClick={() => message.info('Bạn có 3 thông báo mới')}
-            className="w-9 h-9 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 active:scale-95 transition-all shadow-2xs cursor-pointer"
-            aria-label="Thông báo"
-          >
-            <BellOutlined className="text-sm" />
-          </button>
-        </Badge>
+        <NotificationCenter>
+          <Badge dot={unreadCount > 0} offset={[-2, 4]} color="#ef4444">
+            <button
+              type="button"
+              className="w-9 h-9 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 active:scale-95 transition-all shadow-2xs cursor-pointer"
+              aria-label="Thông báo"
+            >
+              <BellOutlined className="text-sm" />
+            </button>
+          </Badge>
+        </NotificationCenter>
 
         {/* Avatar người dùng */}
         <Dropdown popupRender={() => dropdownMenu} placement="bottomRight" trigger={['click']}>
@@ -108,18 +114,19 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
         />
       </Tooltip>
 
-      {/* Nút Thông báo với Badge dot đỏ */}
-      <Tooltip title="Thông báo">
-        <Badge dot offset={[-3, 4]} color="#ef4444">
-          <Button
-            type="text"
-            shape="circle"
-            icon={<BellOutlined className="text-slate-600 dark:text-slate-300 text-base" />}
-            onClick={() => message.info('Bạn có 3 thông báo mới')}
-            className="hover:bg-slate-100 dark:hover:bg-slate-800 w-9 h-9 flex items-center justify-center cursor-pointer"
-          />
-        </Badge>
-      </Tooltip>
+      {/* Nút Thông báo với Popover Desktop */}
+      <NotificationCenter>
+        <Tooltip title="Thông báo cá nhân">
+          <Badge dot={unreadCount > 0} offset={[-3, 4]} color="#ef4444">
+            <Button
+              type="text"
+              shape="circle"
+              icon={<BellOutlined className="text-slate-600 dark:text-slate-300 text-base" />}
+              className="hover:bg-slate-100 dark:hover:bg-slate-800 w-9 h-9 flex items-center justify-center cursor-pointer"
+            />
+          </Badge>
+        </Tooltip>
+      </NotificationCenter>
 
       {/* Avatar người dùng */}
       <Dropdown popupRender={() => dropdownMenu} placement="bottomRight" trigger={['click']}>

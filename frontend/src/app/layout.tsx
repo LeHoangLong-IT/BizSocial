@@ -9,6 +9,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "BizSocial ERP",
   description: "Next Generation ERP for Social Media Management",
+  icons: {
+    icon: "/BizSocial_Logo_1.png",
+    shortcut: "/BizSocial_Logo_1.png",
+    apple: "/BizSocial_Logo_1.png",
+  },
 };
 
 export default function RootLayout({

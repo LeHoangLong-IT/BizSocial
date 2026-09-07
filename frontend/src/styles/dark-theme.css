@@ -1,0 +1,314 @@
+/* =======================================================================
+   BIZSOCIAL ERP - CENTRALIZED DARK THEME DESIGN SYSTEM
+   ======================================================================= */
+
+/* -----------------------------------------------------------------------
+   1. ANT DESIGN GLOBAL DARK MODE OVERRIDES
+   ----------------------------------------------------------------------- */
+.dark .ant-modal-content,
+.dark .ant-modal-header,
+.dark .ant-modal-body,
+.dark .ant-modal-footer {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #1e293b !important;
+}
+
+.dark .ant-modal-title {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+.dark .ant-modal-close {
+  color: #94a3b8 !important;
+}
+
+.dark .ant-modal-close:hover {
+  color: #f8fafc !important;
+  background-color: #1e293b !important;
+}
+
+.dark .ant-form-item-label > label {
+  color: #e2e8f0 !important;
+}
+
+.dark .ant-input,
+.dark .ant-input-password,
+.dark .ant-input-affix-wrapper,
+.dark .ant-select-selector,
+.dark .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+.dark .ant-select-multiple .ant-select-selector,
+.dark .ant-select-outlined:not(.ant-select-customize-input) .ant-select-selector,
+.dark .ant-picker {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+.dark .ant-select-selection-item,
+.dark .ant-select-selection-placeholder,
+.dark .ant-select-arrow,
+.dark .ant-input-password-icon,
+.dark .ant-input-clear-icon {
+  color: #f8fafc !important;
+}
+
+.dark .ant-input::placeholder,
+.dark .ant-select-selection-placeholder {
+  color: #64748b !important;
+}
+
+.dark .ant-input:focus,
+.dark .ant-input-affix-wrapper-focused,
+.dark .ant-select-focused .ant-select-selector,
+.dark .ant-select-open .ant-select-selector {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
+}
+
+.dark .ant-pagination-item {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.dark .ant-pagination-item a {
+  color: #cbd5e1 !important;
+}
+
+.dark .ant-pagination-item-active {
+  background-color: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+}
+
+.dark .ant-pagination-item-active a {
+  color: #ffffff !important;
+}
+
+.dark .ant-popover-inner,
+.dark .ant-popover-arrow::before,
+.dark .ant-dropdown-menu,
+.dark .ant-select-dropdown,
+.dark .ant-picker-dropdown,
+.dark .ant-picker-panel-container {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #1e293b !important;
+}
+
+.dark .ant-dropdown-menu-item,
+.dark .ant-select-item-option {
+  color: #cbd5e1 !important;
+}
+
+.dark .ant-dropdown-menu-item:hover,
+.dark .ant-select-item-option-active,
+.dark .ant-select-item-option-selected {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+.dark .ant-picker-header,
+.dark .ant-picker-cell-in-view {
+  color: #cbd5e1 !important;
+}
+
+.dark .ant-segmented {
+  background-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+.dark .ant-segmented-item-selected {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+.dark .ant-modal-confirm-body .ant-modal-confirm-title {
+  color: #f8fafc !important;
+}
+
+.dark .ant-modal-confirm-body .ant-modal-confirm-content {
+  color: #cbd5e1 !important;
+}
+
+/* -----------------------------------------------------------------------
+   2. ROLES & MATRIX TABLE DARK MODE STYLES
+   ----------------------------------------------------------------------- */
+.dark .custom-matrix-table .ant-table {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+.dark .custom-matrix-table .ant-table-thead > tr > th {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-bottom-color: #334155 !important;
+  border-right-color: #334155 !important;
+}
+
+.dark .custom-matrix-table .ant-table-thead > tr > th,
+.dark .custom-matrix-table .ant-table-thead > tr > th span,
+.dark .custom-matrix-table .ant-table-thead > tr > th div,
+.dark .custom-matrix-table .ant-table-thead > tr > th p {
+  color: #f8fafc !important;
+}
+
+.dark .custom-matrix-table .ant-table-tbody > tr > td {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-bottom-color: #1e293b !important;
+  border-right-color: #1e293b !important;
+}
+
+.dark .custom-matrix-table .ant-table-tbody > tr > td .text-slate-900,
+.dark .custom-matrix-table .ant-table-tbody > tr > td .text-slate-800,
+.dark .custom-matrix-table .ant-table-tbody > tr > td h3,
+.dark .custom-matrix-table .ant-table-tbody > tr > td h4 {
+  color: #ffffff !important;
+}
+
+.dark .custom-matrix-table .ant-table-tbody > tr > td .text-slate-500,
+.dark .custom-matrix-table .ant-table-tbody > tr > td .text-slate-400,
+.dark .custom-matrix-table .ant-table-tbody > tr > td p {
+  color: #94a3b8 !important;
+}
+
+.dark .custom-matrix-table .ant-table-tbody > tr:hover > td {
+  background-color: rgba(30, 41, 59, 0.7) !important;
+}
+
+.dark .custom-matrix-tabs .ant-tabs-nav::before {
+  border-bottom-color: #1e293b !important;
+}
+
+.dark .custom-matrix-tabs .ant-tabs-tab {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+.dark .custom-matrix-tabs .ant-tabs-tab-active {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+.dark .custom-matrix-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #ffffff !important;
+}
+
+.dark .custom-audit-modal .ant-modal-content {
+  background-color: #0f172a !important;
+  border: 1px solid #1e293b !important;
+}
+
+.dark .custom-audit-modal .ant-table {
+  background-color: transparent !important;
+  color: #f8fafc !important;
+}
+
+.dark .custom-audit-modal .ant-table-thead > tr > th {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-bottom: 1px solid #334155 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.05em !important;
+}
+
+.dark .custom-audit-modal .ant-table-tbody > tr > td {
+  background-color: transparent !important;
+  border-bottom: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+}
+
+.dark .custom-audit-modal .ant-table-tbody > tr:hover > td {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+
+/* Mobile responsive layout for custom-audit-modal */
+@media (max-width: 640px) {
+  .custom-audit-modal {
+    max-width: calc(100vw - 24px) !important;
+    margin: 12px auto !important;
+    top: 10px !important;
+  }
+  .custom-audit-modal .ant-modal-content {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+  .custom-audit-modal .ant-modal-header {
+    margin-bottom: 12px !important;
+  }
+}
+
+/* -----------------------------------------------------------------------
+   3. SEMANTIC REUSABLE COMPONENT DARK MODE UTILITIES
+   ----------------------------------------------------------------------- */
+/* Standard Primary Card Container */
+.dark-card-primary {
+  @apply bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700/80 shadow-xs transition-all;
+}
+
+/* Standard Sub-Card / Inner Card Container */
+.dark-card-sub {
+  @apply bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-700/80 transition-all;
+}
+
+/* Interactive Card Hover Effect */
+.dark-card-hover {
+  @apply hover:border-blue-400 dark:hover:border-indigo-500 hover:shadow-xs;
+}
+
+/* Section Header Dividers */
+.dark-divider-b {
+  @apply border-b border-slate-100 dark:border-slate-800;
+}
+
+.dark-divider-t {
+  @apply border-t border-slate-100 dark:border-slate-800;
+}
+
+/* Typography Helpers */
+.dark-title-primary {
+  @apply text-slate-900 dark:!text-white;
+}
+
+.dark-title-secondary {
+  @apply text-slate-800 dark:!text-slate-200;
+}
+
+.dark-text-muted {
+  @apply text-slate-500 dark:!text-slate-400;
+}
+
+/* Level Badges */
+.dark-badge-amber {
+  @apply bg-amber-50 dark:!bg-amber-950/70 text-amber-700 dark:!text-amber-300 border border-amber-200 dark:!border-amber-800/60;
+}
+
+.dark-badge-sky {
+  @apply bg-sky-50 dark:!bg-sky-950/70 text-sky-700 dark:!text-sky-300 border border-sky-200 dark:!border-sky-800/60;
+}
+
+.dark-badge-emerald {
+  @apply bg-emerald-50 dark:!bg-emerald-950/70 text-emerald-700 dark:!text-emerald-300 border border-emerald-200 dark:!border-emerald-800/60;
+}
+
+.dark-badge-indigo {
+  @apply bg-indigo-50 dark:!bg-indigo-950/70 text-indigo-700 dark:!text-indigo-300 border border-indigo-200 dark:!border-indigo-800/60;
+}
+
+.dark-badge-orange {
+  @apply bg-orange-50 dark:!bg-orange-950/70 text-orange-700 dark:!text-orange-300 border border-orange-200 dark:!border-orange-800/60;
+}
+
+.dark-badge-blue {
+  @apply bg-blue-50 dark:!bg-blue-950/70 text-blue-700 dark:!text-blue-300 border border-blue-200 dark:!border-blue-800/60;
+}
+
+.dark-badge-purple {
+  @apply bg-purple-50 dark:!bg-purple-950/70 text-purple-700 dark:!text-purple-300 border border-purple-200 dark:!border-purple-800/60;
+}
+
+.dark-badge-rose {
+  @apply bg-rose-50 dark:!bg-rose-950/70 text-rose-700 dark:!text-rose-300 border border-rose-200 dark:!border-rose-800/60;
+}

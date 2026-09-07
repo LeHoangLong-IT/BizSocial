@@ -1,8 +1,16 @@
 @import "tailwindcss";
+@import "../styles/dark-theme.css";
+
+@custom-variant dark (&:is(.dark, .dark *));
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+.dark {
+  --background: #090d16;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -10,13 +18,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
@@ -85,5 +86,17 @@ html, body, div, main, section {
   -ms-overflow-style: none !important;
 }
 
+/* Custom Popover Notification Alignment for Mobile */
+.notification-popover .ant-popover-inner {
+  padding: 10px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15) !important;
+}
 
-
+@media (max-width: 640px) {
+  .notification-popover {
+    max-width: calc(100vw - 24px) !important;
+    left: 12px !important;
+    right: 12px !important;
+  }
+}
