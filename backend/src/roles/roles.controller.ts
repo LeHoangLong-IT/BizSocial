@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -23,6 +25,24 @@ export class RolesController {
   @RequirePermission('Role', 'READ')
   findAll() {
     return this.rolesService.findAllRoles();
+  }
+
+  @Post()
+  @RequirePermission('Role', 'CREATE')
+  createRole(@Body() body: { name: string; description?: string }) {
+    return this.rolesService.createRole(body);
+  }
+
+  @Patch(':id')
+  @RequirePermission('Role', 'UPDATE')
+  updateRole(@Param('id', ParseIntPipe) id: number, @Body() body: { name?: string; description?: string }) {
+    return this.rolesService.updateRole(id, body);
+  }
+
+  @Delete(':id')
+  @RequirePermission('Role', 'DELETE')
+  deleteRole(@Param('id', ParseIntPipe) id: number) {
+    return this.rolesService.deleteRole(id);
   }
 
   @Get('matrix')
@@ -49,3 +69,4 @@ export class RolesController {
     return this.rolesService.batchUpdateRolePermissions(batchDto);
   }
 }
+

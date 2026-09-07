@@ -120,11 +120,11 @@ interface OrgStats {
 }
 
 const DEPT_COLORS: Record<string, { bg: string; border: string; text: string; iconBg: string }> = {
-  Finance: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', iconBg: 'bg-emerald-500' },
-  Sales: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', iconBg: 'bg-blue-500' },
-  HR: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', iconBg: 'bg-purple-500' },
-  IT: { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-700', iconBg: 'bg-indigo-500' },
-  Social: { bg: 'bg-sky-50', border: 'border-sky-200', text: 'text-sky-700', iconBg: 'bg-sky-500' },
+  Finance: { bg: 'bg-emerald-50 dark:bg-emerald-950/40', border: 'border-emerald-200 dark:border-emerald-700/80', text: 'text-emerald-700 dark:text-emerald-300', iconBg: 'bg-emerald-500' },
+  Sales: { bg: 'bg-blue-50 dark:bg-blue-950/40', border: 'border-blue-200 dark:border-blue-700/80', text: 'text-blue-700 dark:text-blue-300', iconBg: 'bg-blue-500' },
+  HR: { bg: 'bg-purple-50 dark:bg-purple-950/40', border: 'border-purple-200 dark:border-purple-700/80', text: 'text-purple-700 dark:text-purple-300', iconBg: 'bg-purple-500' },
+  IT: { bg: 'bg-indigo-50 dark:bg-indigo-950/40', border: 'border-indigo-200 dark:border-indigo-700/80', text: 'text-indigo-700 dark:text-indigo-300', iconBg: 'bg-indigo-500' },
+  Social: { bg: 'bg-sky-50 dark:bg-sky-950/40', border: 'border-sky-200 dark:border-sky-700/80', text: 'text-sky-700 dark:text-sky-300', iconBg: 'bg-sky-500' },
 };
 
 export default function OrganizationPage() {
@@ -469,10 +469,10 @@ export default function OrganizationPage() {
             className="py-1 cursor-pointer group"
             onClick={() => handleOpenDetailModal(record, 'teams')}
           >
-            <span className="font-bold text-slate-800 text-sm group-hover:text-blue-600 transition-colors block">
+            <span className="font-bold text-slate-800 dark:text-slate-200 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors block">
               {name}
             </span>
-            <p className="text-[11px] text-slate-400 m-0 line-clamp-1 mt-0.5 group-hover:text-slate-500">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 m-0 line-clamp-1 mt-0.5 group-hover:text-slate-500 dark:group-hover:text-slate-400">
               {record.description || 'Chưa có mô tả chức năng'}
             </p>
           </div>
@@ -485,17 +485,17 @@ export default function OrganizationPage() {
       width: '24%',
       render: (_: any, record: DepartmentItem) => {
         if (!record.manager) {
-          return <span className="text-xs text-slate-400 italic">Chưa bổ nhiệm</span>;
+          return <span className="text-xs text-slate-400 dark:text-slate-500 italic">Chưa bổ nhiệm</span>;
         }
         return (
           <div className="flex items-center gap-2">
             <Avatar size="small" icon={<UserOutlined />} className="bg-blue-600 text-white" />
             <div>
-              <span className="font-semibold text-xs text-slate-800 flex items-center gap-1">
+              <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1">
                 {record.manager.name}
                 <CrownOutlined className="text-amber-500 text-[10px]" />
               </span>
-              <span className="text-[10px] text-slate-400 block">{record.manager.email}</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 block">{record.manager.email}</span>
             </div>
           </div>
         );
@@ -507,11 +507,12 @@ export default function OrganizationPage() {
       width: '18%',
       render: (_: any, record: DepartmentItem) => (
         <Tooltip title="Nhấp để xem chi tiết các đội nhóm">
-          <Badge
-            count={`${record.teams.length} teams`}
-            style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 600, cursor: 'pointer' }}
+          <span
+            className="inline-block cursor-pointer px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80"
             onClick={() => handleOpenDetailModal(record, 'teams')}
-          />
+          >
+            {record.teams.length} teams
+          </span>
         </Tooltip>
       ),
     },
@@ -521,11 +522,12 @@ export default function OrganizationPage() {
       width: '16%',
       render: (_: any, record: DepartmentItem) => (
         <Tooltip title="Nhấp để xem danh sách nhân sự phòng ban">
-          <Badge
-            count={`${record.users.length} nhân sự`}
-            style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', fontWeight: 600, cursor: 'pointer' }}
+          <span
+            className="inline-block cursor-pointer px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
             onClick={() => handleOpenDetailModal(record, 'members')}
-          />
+          >
+            {record.users.length} nhân sự
+          </span>
         </Tooltip>
       ),
     },
@@ -541,7 +543,7 @@ export default function OrganizationPage() {
               size="small"
               icon={<EyeOutlined />}
               onClick={() => handleOpenDetailModal(record, 'teams')}
-              className="text-xs text-blue-600 border-blue-200 hover:border-blue-400 hover:bg-blue-50"
+              className="text-xs text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/60"
             />
           </Tooltip>
           <Tooltip title="Chỉnh sửa phòng ban">
@@ -550,7 +552,7 @@ export default function OrganizationPage() {
               icon={<EditOutlined />}
               disabled={!canUpdate}
               onClick={() => handleOpenDeptModal(record)}
-              className="text-xs text-slate-600"
+              className="text-xs text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
             />
           </Tooltip>
           <Popconfirm
@@ -577,51 +579,49 @@ export default function OrganizationPage() {
 
   return (
     <div className="space-y-4 w-full max-w-full overflow-x-hidden">
-      {/* Header Actions (Căn 1 hàng duy nhất trên Mobile & Desktop) */}
-      <div className="flex justify-between items-center gap-2 mb-2">
-        <Title level={3} className="!mb-0 font-bold text-gray-800 text-base sm:text-2xl truncate">
-          Cơ cấu Tổ chức
-        </Title>
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      {/* Header Layout: Title & Actions Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+        <div>
+          <Title level={3} className="!mb-0 font-extrabold text-slate-900 dark:text-white tracking-tight text-xl sm:text-2xl whitespace-nowrap">
+            Cơ cấu Tổ chức
+          </Title>
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 [scrollbar-width:none]">
           {canCreate && (
-            <Tooltip title="Thêm phòng ban">
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => handleOpenDeptModal()}
-                className="bg-[#1e293b] hover:bg-slate-700 border-0 font-medium h-8 text-xs px-2.5 sm:px-3 flex items-center justify-center"
-              >
-                <span className="hidden sm:inline">Thêm phòng ban</span>
-              </Button>
-            </Tooltip>
-          )}
-          {canCreate && (
-            <Tooltip title="Thêm đội nhóm">
-              <Button
-                icon={<BranchesOutlined />}
-                onClick={() => handleOpenTeamModal()}
-                className="text-gray-600 font-medium h-8 px-2.5 sm:px-3 text-xs shadow-none border-gray-200 hover:text-blue-600 flex items-center justify-center"
-              >
-                <span className="hidden sm:inline">Thêm đội nhóm</span>
-              </Button>
-            </Tooltip>
-          )}
-          <Tooltip title="Nhật ký điều chuyển">
             <Button
-              icon={<HistoryOutlined />}
-              onClick={handleOpenLogModal}
-              className="text-purple-700 bg-purple-50 hover:bg-purple-100 border-purple-200 hover:border-purple-300 font-medium h-8 px-2.5 sm:px-3 text-xs shadow-none flex items-center justify-center"
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => handleOpenDeptModal()}
+              className="bg-[#1e293b] dark:bg-blue-600 hover:bg-slate-700 dark:hover:bg-blue-700 border-0 font-bold h-9 text-xs px-3.5 rounded-xl flex items-center justify-center gap-1.5 shrink-0"
             >
-              <span className="hidden sm:inline">Nhật ký điều chuyển</span>
+              <span>Phòng ban</span>
             </Button>
-          </Tooltip>
-          <Tooltip title="Tải lại dữ liệu">
+          )}
+
+          {canCreate && (
             <Button
-              icon={<ReloadOutlined />}
-              onClick={fetchOrgData}
-              className="text-gray-600 font-medium h-8 px-2.5 text-xs shadow-none border-gray-200 hover:text-blue-600 flex items-center justify-center"
-            />
-          </Tooltip>
+              icon={<BranchesOutlined />}
+              onClick={() => handleOpenTeamModal()}
+              className="text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 font-bold h-9 px-3.5 text-xs shadow-none border-slate-200 dark:border-slate-800 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl flex items-center justify-center gap-1.5 shrink-0"
+            >
+              <span>Thêm Team</span>
+            </Button>
+          )}
+
+          <Button
+            icon={<HistoryOutlined />}
+            onClick={handleOpenLogModal}
+            className="text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/60 border-purple-200 dark:border-purple-800/60 font-bold h-9 px-3.5 text-xs shadow-none rounded-xl flex items-center justify-center gap-1.5 shrink-0"
+          >
+            <span className='hidden lg:block'>Nhật ký điều chuyển</span>
+          </Button>
+
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={fetchOrgData}
+            className="text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 font-medium h-9 w-9 p-0 text-xs shadow-none border-slate-200 dark:border-slate-800 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl flex items-center justify-center shrink-0"
+          />
         </div>
       </div>
 
@@ -629,16 +629,16 @@ export default function OrganizationPage() {
       <div className="w-full overflow-hidden">
         <Row gutter={[10, 10]}>
           <Col xs={12} sm={12} md={6}>
-            <Card className="rounded-2xl shadow-xs border border-slate-100 p-3 sm:p-4 hover:shadow-md transition-all">
+            <Card className="rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-4 hover:shadow-md transition-all">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] sm:text-xs text-slate-500 font-medium m-0 truncate">Phòng Ban</p>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 m-0 mt-0.5 sm:mt-1">{stats.totalDepartments}</h2>
-                  <span className="text-[10px] sm:text-[11px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5 sm:mt-1 truncate">
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium m-0 truncate">Phòng Ban</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white m-0 mt-0.5 sm:mt-1">{stats.totalDepartments}</h2>
+                  <span className="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 mt-0.5 sm:mt-1 truncate">
                     <CheckCircleOutlined /> Standard
                   </span>
                 </div>
-                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base sm:text-xl shadow-2xs shrink-0">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base sm:text-xl shadow-2xs shrink-0">
                   <BankOutlined />
                 </div>
               </div>
@@ -646,16 +646,16 @@ export default function OrganizationPage() {
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <Card className="rounded-2xl shadow-xs border border-slate-100 p-3 sm:p-4 hover:shadow-md transition-all">
+            <Card className="rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-4 hover:shadow-md transition-all">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] sm:text-xs text-slate-500 font-medium m-0 truncate">Đội Nhóm (Teams)</p>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 m-0 mt-0.5 sm:mt-1">{stats.totalTeams}</h2>
-                  <span className="text-[10px] sm:text-[11px] text-blue-600 font-medium flex items-center gap-1 mt-0.5 sm:mt-1 truncate">
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium m-0 truncate">Đội Nhóm (Teams)</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white m-0 mt-0.5 sm:mt-1">{stats.totalTeams}</h2>
+                  <span className="text-[10px] sm:text-[11px] text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1 mt-0.5 sm:mt-1 truncate">
                     <BranchesOutlined /> Multi-skill
                   </span>
                 </div>
-                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-base sm:text-xl shadow-2xs shrink-0">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base sm:text-xl shadow-2xs shrink-0">
                   <ApartmentOutlined />
                 </div>
               </div>
@@ -663,18 +663,18 @@ export default function OrganizationPage() {
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <Card className="rounded-2xl shadow-xs border border-slate-100 p-3 sm:p-4 hover:shadow-md transition-all">
+            <Card className="rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-4 hover:shadow-md transition-all">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] sm:text-xs text-slate-500 font-medium m-0 truncate">Nhân Sự Phân Bổ</p>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 m-0 mt-0.5 sm:mt-1">
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium m-0 truncate">Nhân Sự Phân Bổ</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white m-0 mt-0.5 sm:mt-1">
                     {stats.assignedUsers}/{stats.totalUsers}
                   </h2>
-                  <span className="text-[10px] sm:text-[11px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5 sm:mt-1 truncate">
+                  <span className="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 mt-0.5 sm:mt-1 truncate">
                     {stats.totalUsers > 0 ? Math.round((stats.assignedUsers / stats.totalUsers) * 100) : 0}% độ phủ
                   </span>
                 </div>
-                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base sm:text-xl shadow-2xs shrink-0">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base sm:text-xl shadow-2xs shrink-0">
                   <TeamOutlined />
                 </div>
               </div>
@@ -682,16 +682,16 @@ export default function OrganizationPage() {
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <Card className="rounded-2xl shadow-xs border border-slate-100 p-3 sm:p-4 hover:shadow-md transition-all">
+            <Card className="rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-4 hover:shadow-md transition-all">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] sm:text-xs text-slate-500 font-medium m-0 truncate">Lãnh Đạo</p>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 m-0 mt-0.5 sm:mt-1">{stats.totalLeaders}</h2>
-                  <span className="text-[10px] sm:text-[11px] text-amber-600 font-medium flex items-center gap-1 mt-0.5 sm:mt-1 truncate">
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium m-0 truncate">Lãnh Đạo</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white m-0 mt-0.5 sm:mt-1">{stats.totalLeaders}</h2>
+                  <span className="text-[10px] sm:text-[11px] text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1 mt-0.5 sm:mt-1 truncate">
                     <CrownOutlined /> Leaders
                   </span>
                 </div>
-                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base sm:text-xl shadow-2xs shrink-0">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base sm:text-xl shadow-2xs shrink-0">
                   <CrownOutlined />
                 </div>
               </div>
@@ -701,17 +701,17 @@ export default function OrganizationPage() {
       </div>
 
       {/* Thanh Công Cụ Tìm Kiếm & Bộ Lọc Nâng Cao (Search & Filter Toolbar) */}
-      <Card className="rounded-2xl shadow-xs border border-slate-100 p-2.5 sm:p-3 bg-white" styles={{ body: { padding: '12px 16px' } }}>
+      <Card className="rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800 p-2.5 sm:p-3 bg-white dark:bg-slate-900" styles={{ body: { padding: '12px 16px' } }}>
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 w-full">
           {/* Ô tìm kiếm rộng rãi, tỉ lệ chuẩn */}
           <div className="w-full md:w-[380px] lg:w-[440px] shrink-0">
             <Input
-              prefix={<SearchOutlined className="text-slate-400 mr-1.5 text-sm" />}
+              prefix={<SearchOutlined className="text-slate-400 dark:text-slate-500 mr-1.5 text-sm" />}
               placeholder="Tìm kiếm nhân sự, email, phòng ban, đội nhóm..."
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               allowClear
-              className="rounded-xl h-9 text-xs sm:text-sm border-slate-200 hover:border-blue-400 focus:border-blue-500 shadow-2xs"
+              className="rounded-xl h-9 text-xs sm:text-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white hover:border-blue-400 focus:border-blue-500 shadow-2xs"
             />
           </div>
 
@@ -734,8 +734,8 @@ export default function OrganizationPage() {
                 className="w-full sm:w-52 h-9 text-xs"
                 options={[
                   { value: 'ALL', label: 'Mọi trạng thái lãnh đạo' },
-                  { value: 'NO_MANAGER', label: '⚠️ Khuyết Trưởng phòng' },
-                  { value: 'NO_LEADER', label: '⚠️ Team khuyết Leader' },
+                  { value: 'NO_MANAGER', label: 'Khuyết Trưởng phòng' },
+                  { value: 'NO_LEADER', label: 'Khuyết Team Leader' },
                 ]}
               />
             </div>
@@ -747,7 +747,7 @@ export default function OrganizationPage() {
                   setFilterDeptId('ALL');
                   setFilterLeaderStatus('ALL');
                 }}
-                className="h-9 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 border-slate-200 w-full sm:w-auto shrink-0 font-medium"
+                className="h-9 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 w-full sm:w-auto shrink-0 font-medium"
               >
                 Xóa lọc
               </Button>
@@ -767,7 +767,7 @@ export default function OrganizationPage() {
             key: 'chart',
             label: (
               <span className="flex items-center gap-1.5 px-0.5 sm:px-1 text-xs sm:text-sm">
-                <ApartmentOutlined /> Sơ đồ Cây (Org Chart)
+                <ApartmentOutlined /> Sơ đồ tổ chức
               </span>
             ),
           },
@@ -788,26 +788,26 @@ export default function OrganizationPage() {
         </Card>
       ) : activeTab === 'chart' ? (
         /* TAB 1: SƠ ĐỒ CÂY PHÂN CẤP & KHỐI THẺ TỔ CHỨC */
-        <Card className="rounded-b-2xl shadow-xs border border-slate-100 p-3 sm:p-6 bg-slate-50/40 overflow-hidden" styles={{ body: { padding: '16px' } }}>
+        <Card style={{ borderTopLeftRadius: 0 }} className="rounded-b-2xl shadow-xs border border-slate-100 dark:border-slate-800 p-3 sm:p-6 bg-slate-50/40 dark:bg-slate-950/40 overflow-hidden" styles={{ body: { padding: '16px' } }}>
           {/* Thanh công cụ chuyển đổi Chế độ Xem */}
-          <div className="flex justify-between items-center gap-2 mb-3 sm:mb-6 pb-2.5 sm:pb-4 border-b border-slate-200/80">
+          <div className="flex justify-between items-center gap-2 mb-3 sm:mb-6 pb-2.5 sm:pb-4 border-b border-slate-200/80 dark:border-slate-800">
             <div className="min-w-0">
-              <h4 className="text-xs sm:text-sm font-bold text-slate-800 m-0 flex items-center gap-1.5 sm:gap-2 truncate">
+              <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 m-0 flex items-center gap-1.5 sm:gap-2 truncate">
                 {treeViewMode === 'tree' ? (
                   <>
-                    <ApartmentOutlined className="text-blue-600 shrink-0" />
+                    <ApartmentOutlined className="text-blue-600 dark:text-blue-400 shrink-0" />
                     <span className="hidden sm:inline">Sơ đồ Cây Phân Cấp Tự Co Dãn</span>
                     <span className="sm:hidden">Sơ đồ Cây</span>
                   </>
                 ) : (
                   <>
-                    <AppstoreOutlined className="text-indigo-600 shrink-0" />
+                    <AppstoreOutlined className="text-indigo-600 dark:text-indigo-400 shrink-0" />
                     <span className="hidden sm:inline">Khối Thẻ Phòng Ban & Đội Nhóm</span>
                     <span className="sm:hidden">Khối Thẻ</span>
                   </>
                 )}
               </h4>
-              <p className="text-[11px] sm:text-xs text-slate-400 m-0 mt-0.5 hidden sm:block">
+              <p className="text-[11px] sm:text-xs text-slate-400 dark:text-slate-500 m-0 mt-0.5 hidden sm:block">
                 {treeViewMode === 'tree'
                   ? 'Tự động căn giữa hoàn hảo và co dãn đường nối theo số lượng phòng ban & đội nhóm thực tế'
                   : 'Bố cục mở rộng trực quan, tự động điều chỉnh và hiển thị đầy đủ mọi đội nhóm'}
@@ -829,26 +829,26 @@ export default function OrganizationPage() {
             /* CHẾ ĐỘ 1: SƠ ĐỒ CÂY PHÂN CẤP TỰ ĐỘNG CĂN GIỮA (SMART ADAPTIVE TREE) */
             <div className="flex flex-col items-center overflow-x-auto pb-6 w-full touch-pan-x min-h-[400px]">
               {/* Thẻ hướng dẫn vuốt ngang trên Mobile */}
-              <div className="sm:hidden flex items-center justify-center gap-1.5 mb-3 text-[11px] text-slate-500 bg-slate-100/90 py-1 px-3 rounded-full mx-auto w-fit font-medium border border-slate-200/80 shadow-2xs">
+              <div className="sm:hidden flex items-center justify-center gap-1.5 mb-3 text-[11px] text-slate-500 dark:text-slate-400 bg-slate-100/90 dark:bg-slate-800/90 py-1 px-3 rounded-full mx-auto w-fit font-medium border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
                 <span>👈</span> Vuốt ngang để xem sơ đồ <span>👉</span>
               </div>
 
               {/* TẦNG 0: ĐỈNH CÂY - BAN GIÁM ĐỐC */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 shadow-xs w-72 sm:w-80 text-center relative hover:shadow-md transition-all shrink-0">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-500 flex items-center justify-center mx-auto mb-2 text-lg shadow-2xs">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-xs w-72 sm:w-80 text-center relative hover:shadow-md transition-all shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/80 text-amber-500 flex items-center justify-center mx-auto mb-2 text-lg shadow-2xs">
                   <CrownOutlined />
                 </div>
-                <h3 className="font-bold text-slate-800 text-sm sm:text-base m-0">Ban Giám Đốc (BOD)</h3>
-                <p className="text-xs text-slate-400 m-0 mt-0.5">Falcon LLP • BizSocial ERP Hub</p>
-                <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex justify-around text-xs">
-                  <span className="text-slate-600 font-semibold">{departments.length} Khối / Phòng</span>
-                  <span className="text-slate-300">•</span>
-                  <span className="text-slate-600 font-semibold">{stats.totalUsers} Thành viên</span>
+                <h3 className="font-bold text-slate-800 dark:text-white text-sm sm:text-base m-0">Ban Giám Đốc (BOD)</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 m-0 mt-0.5">Falcon LLP • BizSocial ERP Hub</p>
+                <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex justify-around text-xs">
+                  <span className="text-slate-600 dark:text-slate-300 font-semibold">{departments.length} Khối / Phòng</span>
+                  <span className="text-slate-300 dark:text-slate-600">•</span>
+                  <span className="text-slate-600 dark:text-slate-300 font-semibold">{stats.totalUsers} Thành viên</span>
                 </div>
               </div>
 
               {/* Dòng liên kết dọc từ BOD */}
-              <div className="w-0.5 h-6 bg-slate-300"></div>
+              <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-700"></div>
 
               {/* HÀNG CÁC PHÒNG BAN: TỰ ĐỘNG CĂN GIỮA VỚI ĐƯỜNG NỐI CHUẨN ORG-CHART */}
               {filteredDepartments.length === 0 ? (
@@ -859,9 +859,9 @@ export default function OrganizationPage() {
                 <div className="org-tree-branches">
                   {filteredDepartments.map((dept) => {
                     const colorConf = DEPT_COLORS[dept.name] || {
-                      bg: 'bg-slate-50',
-                      border: 'border-slate-200',
-                      text: 'text-slate-700',
+                      bg: 'bg-slate-50 dark:bg-slate-800/60',
+                      border: 'border-slate-200 dark:border-slate-800',
+                      text: 'text-slate-700 dark:text-slate-300',
                       iconBg: 'bg-slate-700',
                     };
                     const isExpanded = expandedDepts[dept.id] !== false;
@@ -873,7 +873,7 @@ export default function OrganizationPage() {
 
                         {/* Card Phòng Ban */}
                         <div
-                          className={`bg-white border ${colorConf.border} rounded-2xl p-3.5 sm:p-4 shadow-xs w-[280px] xs:w-[310px] sm:w-[340px] max-w-[360px] relative hover:shadow-md transition-all text-left`}
+                          className={`bg-white dark:bg-slate-900 border ${colorConf.border} rounded-2xl p-3.5 sm:p-4 shadow-xs w-[280px] xs:w-[310px] sm:w-[340px] max-w-[360px] relative hover:shadow-md transition-all text-left`}
                         >
                           {/* Header Phòng Ban */}
                           <div className="flex items-start justify-between gap-2">
@@ -884,31 +884,30 @@ export default function OrganizationPage() {
                                 <BankOutlined />
                               </div>
                               <div className="min-w-0">
-                                <h4 className="font-bold text-slate-900 text-xs sm:text-sm m-0 truncate">{dept.name}</h4>
-                                <span className="text-[10px] text-slate-400 font-mono">PB #{dept.id}</span>
+                                <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm m-0 truncate">{dept.name}</h4>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">PB #{dept.id}</span>
                               </div>
                             </div>
 
-                            <Badge
-                              count={`${dept.users.length} Nhân sự`}
-                              style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', fontWeight: 600, fontSize: '10px' }}
-                            />
+                            <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                              {dept.users.length} Nhân sự
+                            </span>
                           </div>
 
                           {/* Mô tả */}
-                          <p className="text-[11px] text-slate-500 m-0 mt-2 leading-relaxed line-clamp-2">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-2 leading-relaxed line-clamp-2">
                             {dept.description || 'Phòng ban chức năng trực thuộc khối vận hành.'}
                           </p>
 
                           {/* Trưởng phòng phụ trách */}
-                          <div className="mt-3 p-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                          <div className="mt-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
                             <div className="flex items-center gap-2 min-w-0">
                               <Avatar size={24} icon={<UserOutlined />} className="bg-blue-600 text-white shrink-0" />
                               <div className="min-w-0">
-                                <span className="text-xs font-semibold text-slate-800 truncate block">
+                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate block">
                                   {dept.manager?.name || 'Chưa bổ nhiệm'}
                                 </span>
-                                <span className="text-[10px] text-slate-400 block truncate">
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">
                                   {dept.manager ? 'Trưởng phòng' : 'Đang trống'}
                                 </span>
                               </div>
@@ -917,11 +916,11 @@ export default function OrganizationPage() {
                           </div>
 
                           {/* Footer: Danh sách Team & Toggle */}
-                          <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                          <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                             <Button
                               type="link"
                               size="small"
-                              className="text-xs p-0 text-slate-600 hover:text-blue-600"
+                              className="text-xs p-0 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
                               onClick={() => handleViewMembers(`Nhân sự Phòng ${dept.name}`, dept.users)}
                             >
                               {dept.users.length} thành viên
@@ -932,7 +931,7 @@ export default function OrganizationPage() {
                               size="small"
                               icon={isExpanded ? <DownOutlined /> : <RightOutlined />}
                               onClick={() => toggleDeptExpand(dept.id)}
-                              className="text-[11px] text-slate-500 hover:text-blue-600 flex items-center gap-1"
+                              className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
                             >
                               {dept.teams.length} Teams
                             </Button>
@@ -943,16 +942,16 @@ export default function OrganizationPage() {
                         {isExpanded && (
                           <div className="flex flex-col items-center w-[280px] xs:w-[310px] sm:w-[340px] max-w-[360px] mt-2">
                             {/* Đường nối dọc từ phòng ban xuống teams */}
-                            <div className="w-0.5 h-3.5 bg-slate-300 mb-2"></div>
+                            <div className="w-0.5 h-3.5 bg-slate-300 dark:bg-slate-700 mb-2"></div>
 
                             {dept.teams.length === 0 ? (
-                              <div className="w-full text-center py-2.5 px-3 border border-dashed border-slate-200 rounded-xl bg-white text-[11px] text-slate-400">
+                              <div className="w-full text-center py-2.5 px-3 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-[11px] text-slate-400 dark:text-slate-500">
                                 Chưa có Team trực thuộc.{' '}
                                 {canCreate && (
                                   <Button
                                     type="link"
                                     size="small"
-                                    className="text-[11px] p-0 text-blue-600 font-medium"
+                                    className="text-[11px] p-0 text-blue-600 dark:text-blue-400 font-medium"
                                     onClick={() => handleOpenTeamModal(undefined, dept.id)}
                                   >
                                     + Thêm team
@@ -961,24 +960,23 @@ export default function OrganizationPage() {
                               </div>
                             ) : dept.teams.length === 1 ? (
                               /* Khi có 1 team: Thẻ full-width cân đối */
-                              <div className="w-full bg-white border border-slate-200/80 rounded-xl p-3 shadow-2xs hover:border-blue-300 hover:shadow-xs transition-all text-left">
+                              <div className="w-full bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-700/80 rounded-xl p-3 shadow-2xs hover:border-blue-300 dark:hover:border-indigo-500 hover:shadow-xs transition-all text-left">
                                 <div className="flex items-center justify-between">
-                                  <span className="font-semibold text-xs text-slate-800 flex items-center gap-1.5">
+                                  <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                                     <BranchesOutlined className="text-indigo-500 text-xs" />
                                     {dept.teams[0].name}
                                   </span>
-                                  <Badge
-                                    count={`${dept.teams[0].users?.length || 0}`}
-                                    style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}
-                                  />
+                                  <span className="px-1.5 py-0.5 text-[9px] font-semibold rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80">
+                                    {dept.teams[0].users?.length || 0}
+                                  </span>
                                 </div>
-                                <p className="text-[10px] text-slate-400 m-0 mt-1 line-clamp-1">{dept.teams[0].description || 'Đội nhóm chuyên môn'}</p>
-                                <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                                  <span className="truncate max-w-[150px]">Leader: <strong className="text-slate-700">{dept.teams[0].leader?.name || 'Trống'}</strong></span>
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 m-0 mt-1 line-clamp-1">{dept.teams[0].description || 'Đội nhóm chuyên môn'}</p>
+                                <div className="mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                                  <span className="truncate max-w-[150px]">Leader: <strong className="text-slate-700 dark:text-slate-300">{dept.teams[0].leader?.name || 'Trống'}</strong></span>
                                   <Button
                                     type="link"
                                     size="small"
-                                    className="text-[10px] p-0 text-blue-600 shrink-0"
+                                    className="text-[10px] p-0 text-blue-600 dark:text-blue-400 shrink-0"
                                     onClick={() => handleViewMembers(`Thành viên ${dept.teams[0].name}`, dept.teams[0].users || [])}
                                   >
                                     Xem
@@ -991,30 +989,29 @@ export default function OrganizationPage() {
                                 {dept.teams.map((team) => (
                                   <div
                                     key={team.id}
-                                    className="bg-white border border-slate-200/80 rounded-xl p-2 sm:p-2.5 shadow-2xs hover:border-blue-300 hover:shadow-xs transition-all flex flex-col justify-between text-left"
+                                    className="bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-700/80 rounded-xl p-2 sm:p-2.5 shadow-2xs hover:border-blue-300 dark:hover:border-indigo-500 hover:shadow-xs transition-all flex flex-col justify-between text-left"
                                   >
                                     <div>
                                       <div className="flex items-center justify-between gap-1">
-                                        <span className="font-semibold text-[11px] sm:text-xs text-slate-800 flex items-center gap-1 truncate" title={team.name}>
+                                        <span className="font-semibold text-[11px] sm:text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1 truncate" title={team.name}>
                                           <BranchesOutlined className="text-indigo-500 text-xs shrink-0" />
                                           <span className="truncate">{team.name}</span>
                                         </span>
-                                        <Badge
-                                          count={team.users?.length || 0}
-                                          style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontSize: '9px' }}
-                                        />
+                                        <span className="px-1.5 py-0.5 text-[9px] font-semibold rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80">
+                                          {team.users?.length || 0}
+                                        </span>
                                       </div>
-                                      <p className="text-[10px] text-slate-400 m-0 mt-1 line-clamp-1">{team.description || 'Đội nhóm chuyên môn'}</p>
+                                      <p className="text-[10px] text-slate-400 dark:text-slate-500 m-0 mt-1 line-clamp-1">{team.description || 'Đội nhóm chuyên môn'}</p>
                                     </div>
 
-                                    <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
+                                    <div className="mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
                                       <span className="truncate max-w-[80px] sm:max-w-[95px]" title={team.leader?.name}>
                                         {team.leader?.name || 'Trống'}
                                       </span>
                                       <Button
                                         type="link"
                                         size="small"
-                                        className="text-[10px] p-0 text-blue-600 font-medium h-auto shrink-0"
+                                        className="text-[10px] p-0 text-blue-600 dark:text-blue-400 font-medium h-auto shrink-0"
                                         onClick={() => handleViewMembers(`Thành viên ${team.name}`, team.users || [])}
                                       >
                                         Xem
@@ -1034,37 +1031,37 @@ export default function OrganizationPage() {
             </div>
           ) : filteredDepartments.length === 0 ? (
             /* CHẾ ĐỘ 2: KHỐI THẺ TỔ CHỨC ĐA CỘT (MODERN CARD MATRIX) */
-            <div className="py-12 text-center w-full bg-white rounded-2xl border border-dashed border-slate-200">
+            <div className="py-12 text-center w-full bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
               <Empty description="Không tìm thấy phòng ban hay nhân sự nào khớp với bộ lọc" />
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {filteredDepartments.map((dept) => {
                 const colorConf = DEPT_COLORS[dept.name] || {
-                  bg: 'bg-slate-50',
-                  border: 'border-slate-200',
-                  text: 'text-slate-700',
+                  bg: 'bg-slate-50 dark:bg-slate-800/60',
+                  border: 'border-slate-200 dark:border-slate-800',
+                  text: 'text-slate-700 dark:text-slate-300',
                   iconBg: 'bg-slate-700',
                 };
 
                 return (
                   <Card
                     key={dept.id}
-                    className="rounded-2xl shadow-xs border border-slate-200/90 hover:shadow-md transition-all overflow-hidden bg-white"
+                    className="dark-card-primary rounded-2xl overflow-hidden"
                     styles={{ body: { padding: '16px' } }}
                   >
                     {/* Header Phòng Ban */}
-                    <div className="flex items-start justify-between gap-2 pb-3 border-b border-slate-100">
+                    <div className="flex items-start justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl ${colorConf.bg} ${colorConf.text} border ${colorConf.border} flex items-center justify-center text-lg sm:text-xl shadow-2xs shrink-0`}>
                           <BankOutlined />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <h3 className="font-bold text-slate-900 text-sm sm:text-base m-0 truncate">{dept.name}</h3>
+                            <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base m-0 truncate">{dept.name}</h3>
                             <Tag color="blue" className="text-[10px] m-0 font-semibold px-1.5">{dept.teams.length} Teams</Tag>
                           </div>
-                          <p className="text-[11px] sm:text-xs text-slate-400 m-0 mt-0.5 line-clamp-1">{dept.description || 'Phòng ban chức năng'}</p>
+                          <p className="text-[11px] sm:text-xs text-slate-400 dark:text-slate-500 m-0 mt-0.5 line-clamp-1">{dept.description || 'Phòng ban chức năng'}</p>
                         </div>
                       </div>
 
@@ -1074,7 +1071,7 @@ export default function OrganizationPage() {
                             size="small"
                             icon={<PlusOutlined />}
                             onClick={() => handleOpenTeamModal(undefined, dept.id)}
-                            className="text-xs text-blue-600 border-blue-200 h-7 px-2"
+                            className="text-xs text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 h-7 px-2"
                           >
                             <span className="hidden sm:inline">Team</span>
                           </Button>
@@ -1084,21 +1081,21 @@ export default function OrganizationPage() {
                           icon={<EditOutlined />}
                           disabled={!canUpdate}
                           onClick={() => handleOpenDeptModal(dept)}
-                          className="text-xs text-slate-600 h-7 px-2"
+                          className="text-xs text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 h-7 px-2"
                         />
                       </Space>
                     </div>
 
                     {/* Trưởng phòng & Nhân sự */}
-                    <div className="my-3 p-2.5 sm:p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-2 text-xs">
+                    <div className="my-3 p-2.5 sm:p-3 rounded-xl dark-card-sub flex items-center justify-between gap-2 text-xs">
                       <div className="flex items-center gap-2 min-w-0">
                         <Avatar size={28} icon={<UserOutlined />} className="bg-blue-600 text-white font-bold shrink-0" />
                         <div className="min-w-0">
-                          <span className="font-bold text-slate-800 text-xs flex items-center gap-1 truncate">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 text-xs flex items-center gap-1 truncate">
                             {dept.manager?.name || 'Chưa bổ nhiệm'}
                             {dept.manager && <CrownOutlined className="text-amber-500 text-xs shrink-0" />}
                           </span>
-                          <span className="text-[10px] sm:text-[11px] text-slate-400 block truncate max-w-[130px] xs:max-w-[180px] sm:max-w-none">
+                          <span className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 block truncate max-w-[130px] xs:max-w-[180px] sm:max-w-none">
                             {dept.manager?.email || 'Đang khuyết vị trí Trưởng phòng'}
                           </span>
                         </div>
@@ -1107,7 +1104,7 @@ export default function OrganizationPage() {
                       <Button
                         type="link"
                         size="small"
-                        className="text-xs text-blue-600 p-0 font-semibold shrink-0"
+                        className="text-xs text-blue-600 dark:text-blue-400 p-0 font-semibold shrink-0"
                         onClick={() => handleViewMembers(`Nhân sự Phòng ${dept.name}`, dept.users)}
                       >
                         {dept.users.length} nhân sự →
@@ -1117,19 +1114,19 @@ export default function OrganizationPage() {
                     {/* Danh sách các Đội nhóm trực thuộc */}
                     <div>
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        <span className="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                           Đội nhóm trực thuộc ({dept.teams.length})
                         </span>
                       </div>
 
                       {dept.teams.length === 0 ? (
-                        <div className="py-5 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                        <div className="py-5 text-center text-xs text-slate-400 dark:text-slate-500 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-800/40">
                           Chưa có đội nhóm nào.{' '}
                           {canCreate && (
                             <Button
                               type="link"
                               size="small"
-                              className="text-xs p-0 text-blue-600 font-medium"
+                              className="text-xs p-0 text-blue-600 dark:text-blue-400 font-medium"
                               onClick={() => handleOpenTeamModal(undefined, dept.id)}
                             >
                               Tạo team ngay
@@ -1141,32 +1138,31 @@ export default function OrganizationPage() {
                           {dept.teams.map((team) => (
                             <div
                               key={team.id}
-                              className="p-2.5 sm:p-3 rounded-xl border border-slate-200/80 bg-white hover:border-blue-400 hover:shadow-xs transition-all flex flex-col justify-between"
+                              className="p-2.5 sm:p-3 rounded-xl dark-card-sub dark-card-hover flex flex-col justify-between"
                             >
                               <div>
                                 <div className="flex items-center justify-between gap-1">
-                                  <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5 truncate">
+                                  <span className="font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate">
                                     <BranchesOutlined className="text-indigo-500 text-xs shrink-0" />
                                     <span className="truncate">{team.name}</span>
                                   </span>
-                                  <Badge
-                                    count={`${team.users?.length || 0}`}
-                                    style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontSize: '9px' }}
-                                  />
+                                  <span className="px-1.5 py-0.5 text-[9px] font-semibold rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80">
+                                    {team.users?.length || 0}
+                                  </span>
                                 </div>
-                                <p className="text-[10px] text-slate-400 m-0 mt-1 line-clamp-1">{team.description || 'Chưa có mô tả'}</p>
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 m-0 mt-1 line-clamp-1">{team.description || 'Chưa có mô tả'}</p>
                               </div>
 
-                              <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                              <div className="mt-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs">
                                 <div className="flex items-center gap-1.5 truncate max-w-[110px] sm:max-w-[130px]">
                                   <Avatar size={18} icon={<UserOutlined />} className="bg-amber-500 text-white shrink-0" />
-                                  <span className="text-[10px] sm:text-[11px] text-slate-600 truncate">{team.leader?.name || 'Trống'}</span>
+                                  <span className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400 truncate">{team.leader?.name || 'Trống'}</span>
                                 </div>
 
                                 <Button
                                   type="link"
                                   size="small"
-                                  className="text-[10px] sm:text-[11px] p-0 text-blue-600 shrink-0 font-medium"
+                                  className="text-[10px] sm:text-[11px] p-0 text-blue-600 dark:text-blue-400 shrink-0 font-medium"
                                   onClick={() => handleViewMembers(`Thành viên ${team.name}`, team.users || [])}
                                 >
                                   Chi tiết
@@ -1185,28 +1181,28 @@ export default function OrganizationPage() {
         </Card>
       ) : (
         /* TAB 2: QUẢN LÝ PHÒNG BAN & ĐỘI NHÓM */
-        <Card className="rounded-b-2xl shadow-xs border border-slate-100 p-3 sm:p-0 overflow-hidden bg-white">
+        <Card style={{ borderTopLeftRadius: 0 }} className="rounded-b-2xl shadow-xs border border-slate-100 dark:border-slate-800 p-3 sm:p-0 overflow-hidden bg-white dark:bg-slate-900">
           {/* View 1: Mobile Card List (block sm:hidden) */}
           <div className="block sm:hidden space-y-3">
             {filteredDepartments.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+              <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
                 <Empty description="Không tìm thấy phòng ban nào" />
               </div>
             ) : (
               filteredDepartments.map((dept) => {
                 const colorConf = DEPT_COLORS[dept.name] || {
-                  bg: 'bg-slate-50',
-                  border: 'border-slate-200',
-                  text: 'text-slate-700',
+                  bg: 'bg-slate-50 dark:bg-slate-800/60',
+                  border: 'border-slate-200 dark:border-slate-800',
+                  text: 'text-slate-700 dark:text-slate-300',
                 };
 
                 return (
                   <div
                     key={dept.id}
-                    className="p-3.5 rounded-2xl border border-slate-200/90 bg-white shadow-2xs space-y-3"
+                    className="p-3.5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs space-y-3"
                   >
                     {/* Header: Icon, Tên PB & Thao tác */}
-                    <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-100">
+                    <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div
                           className={`w-9 h-9 rounded-xl ${colorConf.bg} ${colorConf.text} border ${colorConf.border} flex items-center justify-center text-base shadow-2xs shrink-0`}
@@ -1214,8 +1210,8 @@ export default function OrganizationPage() {
                           <BankOutlined />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="font-bold text-slate-900 text-sm m-0 truncate">{dept.name}</h4>
-                          <p className="text-[11px] text-slate-400 m-0 line-clamp-1">{dept.description || 'Chưa có mô tả'}</p>
+                          <h4 className="font-bold text-slate-900 dark:text-white text-sm m-0 truncate">{dept.name}</h4>
+                          <p className="text-[11px] text-slate-400 dark:text-slate-500 m-0 line-clamp-1">{dept.description || 'Chưa có mô tả'}</p>
                         </div>
                       </div>
 
@@ -1224,14 +1220,14 @@ export default function OrganizationPage() {
                           size="small"
                           icon={<EyeOutlined />}
                           onClick={() => handleOpenDetailModal(dept, 'teams')}
-                          className="text-xs text-blue-600 border-blue-200 h-7 px-2"
+                          className="text-xs text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 h-7 px-2"
                         />
                         <Button
                           size="small"
                           icon={<EditOutlined />}
                           disabled={!canUpdate}
                           onClick={() => handleOpenDeptModal(dept)}
-                          className="text-xs text-slate-600 h-7 px-2"
+                          className="text-xs text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 h-7 px-2"
                         />
                         <Popconfirm
                           title="Xóa phòng ban này?"
@@ -1254,32 +1250,34 @@ export default function OrganizationPage() {
                     </div>
 
                     {/* Trưởng phòng (Manager) */}
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2 min-w-0">
                         <Avatar size={26} icon={<UserOutlined />} className="bg-blue-600 text-white shrink-0 font-bold" />
                         <div className="min-w-0">
-                          <span className="font-bold text-slate-800 text-xs flex items-center gap-1 truncate">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 text-xs flex items-center gap-1 truncate">
                             {dept.manager?.name || 'Chưa bổ nhiệm'}
                             {dept.manager && <CrownOutlined className="text-amber-500 text-xs shrink-0" />}
                           </span>
-                          <span className="text-[10px] text-slate-400 block truncate">{dept.manager?.email || 'Đang khuyết vị trí Trưởng phòng'}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">{dept.manager?.email || 'Đang khuyết vị trí Trưởng phòng'}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Footer: Teams & Members Badges */}
                     <div className="flex items-center justify-between pt-1 text-xs">
-                      <Badge
-                        count={`${dept.teams.length} teams`}
-                        style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 600, cursor: 'pointer', fontSize: '11px' }}
+                      <span
+                        className="inline-block cursor-pointer px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80"
                         onClick={() => handleOpenDetailModal(dept, 'teams')}
-                      />
+                      >
+                        {dept.teams.length} teams
+                      </span>
 
-                      <Badge
-                        count={`${dept.users.length} nhân sự`}
-                        style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', fontWeight: 600, cursor: 'pointer', fontSize: '11px' }}
+                      <span
+                        className="inline-block cursor-pointer px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                         onClick={() => handleOpenDetailModal(dept, 'members')}
-                      />
+                      >
+                        {dept.users.length} nhân sự
+                      </span>
                     </div>
                   </div>
                 );
@@ -1316,7 +1314,7 @@ export default function OrganizationPage() {
         {selectedDeptDetail && (
           <div>
             {/* Header Hồ Sơ Phòng Ban */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 pb-3.5 sm:pb-4 border-b border-slate-100">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 pb-3.5 sm:pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0">
                 <div
                   className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${(DEPT_COLORS[selectedDeptDetail.name] || DEPT_COLORS.Social).bg
@@ -1328,12 +1326,12 @@ export default function OrganizationPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-slate-900 text-base sm:text-lg m-0 truncate">{selectedDeptDetail.name}</h3>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg m-0 truncate">{selectedDeptDetail.name}</h3>
                     <Tag color="blue" className="text-[10px] sm:text-xs font-semibold m-0 px-1.5">
                       Mã: PB#{selectedDeptDetail.id}
                     </Tag>
                   </div>
-                  <p className="text-xs text-slate-500 m-0 mt-1 leading-relaxed max-w-full sm:max-w-xl line-clamp-2 sm:line-clamp-none">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 m-0 mt-1 leading-relaxed max-w-full sm:max-w-xl line-clamp-2 sm:line-clamp-none">
                     {selectedDeptDetail.description || 'Chưa có mô tả chức năng cho phòng ban này.'}
                   </p>
                 </div>
@@ -1356,7 +1354,7 @@ export default function OrganizationPage() {
                   onClick={() => {
                     handleOpenDeptModal(selectedDeptDetail);
                   }}
-                  className="text-xs text-slate-600 h-8 flex-1 sm:flex-none justify-center"
+                  className="text-xs text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 h-8 flex-1 sm:flex-none justify-center"
                 >
                   Cập nhật
                 </Button>
@@ -1365,35 +1363,35 @@ export default function OrganizationPage() {
 
             {/* Dải Thống Kê Nhanh & Lãnh Đạo */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 my-3 sm:my-4">
-              <div className="col-span-2 sm:col-span-1 p-2.5 sm:p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2.5">
+              <div className="col-span-2 sm:col-span-1 p-2.5 sm:p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center gap-2.5">
                 <Avatar size={34} icon={<UserOutlined />} className="bg-blue-600 text-white shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <span className="text-xs font-bold text-slate-800 truncate flex items-center gap-1">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate flex items-center gap-1">
                     {selectedDeptDetail.manager?.name || 'Chưa bổ nhiệm'}
                     {selectedDeptDetail.manager && <CrownOutlined className="text-amber-500 text-xs" />}
                   </span>
-                  <span className="text-[11px] text-slate-400 block truncate">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate">
                     {selectedDeptDetail.manager?.email || 'Đang khuyết Trưởng phòng'}
                   </span>
                 </div>
               </div>
 
-              <div className="col-span-1 p-2.5 sm:p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-1.5">
+              <div className="col-span-1 p-2.5 sm:p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-1.5">
                 <div className="min-w-0">
-                  <span className="text-[10px] sm:text-[11px] text-slate-400 block font-medium truncate">Đội Nhóm</span>
-                  <span className="text-xs sm:text-base font-extrabold text-blue-600 truncate block">{selectedDeptDetail.teams.length} teams</span>
+                  <span className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 block font-medium truncate">Đội Nhóm</span>
+                  <span className="text-xs sm:text-base font-extrabold text-blue-600 dark:text-blue-400 truncate block">{selectedDeptDetail.teams.length} teams</span>
                 </div>
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs sm:text-sm shrink-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs sm:text-sm shrink-0">
                   <BranchesOutlined />
                 </div>
               </div>
 
-              <div className="col-span-1 p-2.5 sm:p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-1.5">
+              <div className="col-span-1 p-2.5 sm:p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-1.5">
                 <div className="min-w-0">
-                  <span className="text-[10px] sm:text-[11px] text-slate-400 block font-medium truncate">Nhân Sự</span>
-                  <span className="text-xs sm:text-base font-extrabold text-emerald-600 truncate block">{selectedDeptDetail.users.length} nhân sự</span>
+                  <span className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 block font-medium truncate">Nhân Sự</span>
+                  <span className="text-xs sm:text-base font-extrabold text-emerald-600 dark:text-emerald-400 truncate block">{selectedDeptDetail.users.length} nhân sự</span>
                 </div>
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs sm:text-sm shrink-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs sm:text-sm shrink-0">
                   <TeamOutlined />
                 </div>
               </div>
@@ -1416,10 +1414,10 @@ export default function OrganizationPage() {
                   children: (
                     <div className="mt-2">
                       {selectedDeptDetail.teams.length === 0 ? (
-                        <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                          <BranchesOutlined className="text-3xl text-slate-300 mb-2" />
-                          <p className="text-sm font-semibold text-slate-600 m-0">Phòng ban này chưa có đội nhóm nào</p>
-                          <p className="text-xs text-slate-400 m-0 mt-1 mb-3">Tạo các đội nhóm chuyên môn để phân công công việc hiệu quả hơn</p>
+                        <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                          <BranchesOutlined className="text-3xl text-slate-300 dark:text-slate-600 mb-2" />
+                          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 m-0">Phòng ban này chưa có đội nhóm nào</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 m-0 mt-1 mb-3">Tạo các đội nhóm chuyên môn để phân công công việc hiệu quả hơn</p>
                           {canCreate && (
                             <Button
                               type="primary"
@@ -1437,28 +1435,27 @@ export default function OrganizationPage() {
                           {selectedDeptDetail.teams.map((team) => (
                             <div
                               key={team.id}
-                              className="p-3.5 rounded-xl border border-slate-200/80 bg-white hover:border-blue-400 hover:shadow-xs transition-all flex flex-col justify-between"
+                              className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-blue-400 dark:hover:border-blue-700 hover:shadow-xs transition-all flex flex-col justify-between"
                             >
                               <div>
                                 <div className="flex items-center justify-between gap-1">
-                                  <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5 truncate">
+                                  <span className="font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate">
                                     <BranchesOutlined className="text-indigo-500 text-xs" />
                                     {team.name}
                                   </span>
-                                  <Badge
-                                    count={`${team.users?.length || 0} Nhân sự`}
-                                    style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontSize: '10px' }}
-                                  />
+                                  <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80">
+                                    {team.users?.length || 0} Nhân sự
+                                  </span>
                                 </div>
-                                <p className="text-[11px] text-slate-400 m-0 mt-1 line-clamp-2 leading-relaxed">
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500 m-0 mt-1 line-clamp-2 leading-relaxed">
                                   {team.description || 'Chưa có mô tả nhiệm vụ chuyên môn.'}
                                 </p>
                               </div>
 
-                              <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs gap-1.5">
+                              <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs gap-1.5">
                                 <div className="flex items-center gap-1.5 truncate max-w-[110px] xs:max-w-[140px]">
                                   <Avatar size={18} icon={<UserOutlined />} className="bg-amber-500 text-white shrink-0" />
-                                  <span className="text-[11px] text-slate-600 truncate font-medium">
+                                  <span className="text-[11px] text-slate-600 dark:text-slate-400 truncate font-medium">
                                     {team.leader?.name || 'Chưa có Leader'}
                                   </span>
                                 </div>
@@ -1468,7 +1465,7 @@ export default function OrganizationPage() {
                                     <Button
                                       size="small"
                                       icon={<EyeOutlined />}
-                                      className="text-[11px] px-2 h-7 text-blue-600 border-blue-200 hover:border-blue-400"
+                                      className="text-[11px] px-2 h-7 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:border-blue-400"
                                       onClick={() => handleViewMembers(`Thành viên Team: ${team.name}`, team.users || [])}
                                     />
                                   </Tooltip>
@@ -1477,7 +1474,7 @@ export default function OrganizationPage() {
                                     icon={<EditOutlined />}
                                     disabled={!canUpdate}
                                     onClick={() => handleOpenTeamModal(team, selectedDeptDetail.id)}
-                                    className="text-[11px] h-7 px-1.5 text-slate-600"
+                                    className="text-[11px] h-7 px-1.5 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
                                   />
                                   <Popconfirm
                                     title="Xóa đội nhóm này?"
@@ -1510,10 +1507,10 @@ export default function OrganizationPage() {
                   children: (
                     <div className="mt-2 space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
                       {selectedDeptDetail.users.length === 0 ? (
-                        <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                          <TeamOutlined className="text-3xl text-slate-300 mb-2" />
-                          <p className="text-sm font-semibold text-slate-600 m-0">Phòng ban này hiện chưa có nhân sự nào</p>
-                          <p className="text-xs text-slate-400 m-0 mt-1">Điều chuyển nhân sự từ trang Quản lý User vào phòng ban này</p>
+                        <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                          <TeamOutlined className="text-3xl text-slate-300 dark:text-slate-600 mb-2" />
+                          <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 m-0">Phòng ban này hiện chưa có nhân sự nào</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 m-0 mt-1">Điều chuyển nhân sự từ trang Quản lý User vào phòng ban này</p>
                         </div>
                       ) : (
                         selectedDeptDetail.users.map((member) => {
@@ -1521,7 +1518,7 @@ export default function OrganizationPage() {
                           return (
                             <div
                               key={member.id}
-                              className="p-3 bg-white hover:bg-slate-50/80 border border-slate-200/80 hover:border-blue-200 transition-all rounded-xl flex items-start gap-3 shadow-2xs"
+                              className="p-3 bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/80 border border-slate-200/80 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-700 transition-all rounded-xl flex items-start gap-3 shadow-2xs"
                             >
                               {/* Cột 1: Avatar */}
                               <Avatar size={40} icon={<UserOutlined />} className="bg-slate-800 text-white font-bold shrink-0 mt-0.5" />
@@ -1531,14 +1528,14 @@ export default function OrganizationPage() {
                                 {/* Hàng 1: Tên & Chức vụ + Team (trái) + Nút Chuyển giữ mỗi Icon (phải) */}
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex items-center gap-1.5 flex-wrap min-w-0 flex-1">
-                                    <span className="font-bold text-slate-800 text-xs sm:text-sm truncate">{member.name}</span>
+                                    <span className="font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-sm truncate">{member.name}</span>
                                     {member.role && (
-                                      <Tag color="blue" className="text-[10px] m-0 font-medium border-0 bg-blue-50 text-blue-700 px-1.5 py-0 shrink-0">
+                                      <Tag color="blue" className="text-[10px] m-0 font-medium border-0 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 px-1.5 py-0 shrink-0">
                                         {member.role.name}
                                       </Tag>
                                     )}
                                     {memberTeam && (
-                                      <Tag color="purple" className="text-[10px] m-0 font-medium border-0 bg-purple-50 text-purple-700 flex items-center gap-1 px-1.5 py-0 shrink-0">
+                                      <Tag color="purple" className="text-[10px] m-0 font-medium border-0 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center gap-1 px-1.5 py-0 shrink-0">
                                         <BranchesOutlined /> {memberTeam.name}
                                       </Tag>
                                     )}
@@ -1549,23 +1546,23 @@ export default function OrganizationPage() {
                                       <Button
                                         type="text"
                                         shape="circle"
-                                        icon={<SwapOutlined className="text-blue-600 text-xs sm:text-sm" />}
+                                        icon={<SwapOutlined className="text-blue-600 dark:text-blue-400 text-xs sm:text-sm" />}
                                         onClick={() => handleOpenTransferModal(member)}
-                                        className="hover:bg-blue-50 shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center border border-slate-200/70 hover:border-blue-300 text-blue-600 shadow-2xs"
+                                        className="hover:bg-blue-50 dark:hover:bg-blue-950/60 shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center border border-slate-200/70 dark:border-slate-700 hover:border-blue-300 text-blue-600 dark:text-blue-400 shadow-2xs"
                                       />
                                     </Tooltip>
                                   )}
                                 </div>
 
                                 {/* Hàng 2: Gmail */}
-                                <div className="text-[11px] sm:text-xs text-slate-500 truncate flex items-center gap-1.5">
-                                  <MailOutlined className="text-slate-400 text-[11px] shrink-0" />
+                                <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1.5">
+                                  <MailOutlined className="text-slate-400 dark:text-slate-500 text-[11px] shrink-0" />
                                   <span className="truncate">{member.email}</span>
                                 </div>
 
                                 {/* Hàng 3: SĐT */}
-                                <div className="text-[11px] sm:text-xs text-slate-500 font-mono truncate flex items-center gap-1.5">
-                                  <PhoneOutlined className="text-slate-400 text-[11px] shrink-0" />
+                                <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono truncate flex items-center gap-1.5">
+                                  <PhoneOutlined className="text-slate-400 dark:text-slate-500 text-[11px] shrink-0" />
                                   <span>{member.phone || 'Chưa cập nhật SĐT'}</span>
                                 </div>
                               </div>
@@ -1591,6 +1588,7 @@ export default function OrganizationPage() {
         okText="Lưu phòng ban"
         cancelText="Hủy"
         centered
+        forceRender
         zIndex={1050}
       >
         <Form form={deptForm} layout="vertical" className="mt-4">
@@ -1632,6 +1630,7 @@ export default function OrganizationPage() {
         okText="Lưu đội nhóm"
         cancelText="Hủy"
         centered
+        forceRender
         zIndex={1050}
       >
         <Form form={teamForm} layout="vertical" className="mt-4">
@@ -1682,20 +1681,19 @@ export default function OrganizationPage() {
       {/* Modal Danh Sách Thành Viên (Thay thế Drawer theo chuẩn UX/UI Mobile & Desktop) */}
       <Modal
         title={
-          <div className="flex items-center justify-between pr-6 pb-2 border-b border-slate-100">
+          <div className="flex items-center justify-between pr-6 pb-2 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center text-base sm:text-lg shadow-2xs shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/80 flex items-center justify-center text-base sm:text-lg shadow-2xs shrink-0">
                 <TeamOutlined />
               </div>
               <div className="flex flex-col justify-center min-w-0">
-                <h4 className="font-bold text-slate-900 text-sm sm:text-base m-0 leading-tight truncate">
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base m-0 leading-tight truncate">
                   {drawerTitle}
                 </h4>
                 <div className="mt-1 flex items-center">
-                  <Badge
-                    count={`${drawerMembers.length} thành viên`}
-                    style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 600, fontSize: '10px' }}
-                  />
+                  <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80">
+                    {drawerMembers.length} thành viên
+                  </span>
                 </div>
               </div>
             </div>
@@ -1714,63 +1712,63 @@ export default function OrganizationPage() {
         }}
       >
         {drawerMembers.length === 0 ? (
-          <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-            <TeamOutlined className="text-3xl text-slate-300 mb-2" />
-            <p className="text-sm font-semibold text-slate-600 m-0">Chưa có thành viên nào trong danh sách này</p>
-            <p className="text-xs text-slate-400 m-0 mt-1">Điều chuyển nhân sự từ trang Quản lý User vào đây</p>
+          <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+            <TeamOutlined className="text-3xl text-slate-300 dark:text-slate-600 mb-2" />
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 m-0">Chưa có thành viên nào trong danh sách này</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 m-0 mt-1">Điều chuyển nhân sự từ trang Quản lý User vào đây</p>
           </div>
         ) : (
           <div className="space-y-2.5 max-h-[440px] overflow-y-auto pr-1">
-              {drawerMembers.map((member) => (
-                <div
-                  key={member.id}
-                  className="p-3 bg-white hover:bg-slate-50/80 border border-slate-200/80 hover:border-blue-200 transition-all rounded-xl flex items-start gap-3 shadow-2xs"
-                >
-                  {/* Cột 1: Avatar */}
-                  <Avatar size={40} icon={<UserOutlined />} className="bg-slate-800 text-white font-bold shrink-0 mt-0.5" />
+            {drawerMembers.map((member) => (
+              <div
+                key={member.id}
+                className="p-3 bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/80 border border-slate-200/80 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-700 transition-all rounded-xl flex items-start gap-3 shadow-2xs"
+              >
+                {/* Cột 1: Avatar */}
+                <Avatar size={40} icon={<UserOutlined />} className="bg-slate-800 text-white font-bold shrink-0 mt-0.5" />
 
-                  {/* Cột 2: Khối thông tin 3 hàng */}
-                  <div className="min-w-0 flex-1 space-y-1">
-                    {/* Hàng 1: Tên & Chức vụ (trái) + Nút Chuyển giữ mỗi Icon (phải) */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className="font-bold text-slate-800 text-xs sm:text-sm truncate">{member.name}</span>
-                        {member.role && (
-                          <Tag color="blue" className="text-[10px] m-0 font-medium border-0 bg-blue-50 text-blue-700 px-1.5 py-0 shrink-0">
-                            {member.role.name}
-                          </Tag>
-                        )}
-                      </div>
-
-                      {canUpdate && (
-                        <Tooltip title="Điều chuyển nhân sự">
-                          <Button
-                            type="text"
-                            shape="circle"
-                            icon={<SwapOutlined className="text-blue-600 text-xs sm:text-sm" />}
-                            onClick={() => handleOpenTransferModal(member)}
-                            className="hover:bg-blue-50 shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center border border-slate-200/70 hover:border-blue-300 text-blue-600 shadow-2xs"
-                          />
-                        </Tooltip>
+                {/* Cột 2: Khối thông tin 3 hàng */}
+                <div className="min-w-0 flex-1 space-y-1">
+                  {/* Hàng 1: Tên & Chức vụ (trái) + Nút Chuyển giữ mỗi Icon (phải) */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-sm truncate">{member.name}</span>
+                      {member.role && (
+                        <Tag color="blue" className="text-[10px] m-0 font-medium border-0 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 px-1.5 py-0 shrink-0">
+                          {member.role.name}
+                        </Tag>
                       )}
                     </div>
 
-                    {/* Hàng 2: Gmail */}
-                    <div className="text-[11px] sm:text-xs text-slate-500 truncate flex items-center gap-1.5">
-                      <MailOutlined className="text-slate-400 text-[11px] shrink-0" />
-                      <span className="truncate">{member.email}</span>
-                    </div>
+                    {canUpdate && (
+                      <Tooltip title="Điều chuyển nhân sự">
+                        <Button
+                          type="text"
+                          shape="circle"
+                          icon={<SwapOutlined className="text-blue-600 dark:text-blue-400 text-xs sm:text-sm" />}
+                          onClick={() => handleOpenTransferModal(member)}
+                          className="hover:bg-blue-50 dark:hover:bg-blue-950/60 shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center border border-slate-200/70 dark:border-slate-700 hover:border-blue-300 text-blue-600 dark:text-blue-400 shadow-2xs"
+                        />
+                      </Tooltip>
+                    )}
+                  </div>
 
-                    {/* Hàng 3: SĐT */}
-                    <div className="text-[11px] sm:text-xs text-slate-500 font-mono truncate flex items-center gap-1.5">
-                      <PhoneOutlined className="text-slate-400 text-[11px] shrink-0" />
-                      <span>{member.phone || 'Chưa cập nhật SĐT'}</span>
-                    </div>
+                  {/* Hàng 2: Gmail */}
+                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1.5">
+                    <MailOutlined className="text-slate-400 dark:text-slate-500 text-[11px] shrink-0" />
+                    <span className="truncate">{member.email}</span>
+                  </div>
+
+                  {/* Hàng 3: SĐT */}
+                  <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono truncate flex items-center gap-1.5">
+                    <PhoneOutlined className="text-slate-400 dark:text-slate-500 text-[11px] shrink-0" />
+                    <span>{member.phone || 'Chưa cập nhật SĐT'}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
+        )}
       </Modal>
 
       {/* Modal Điều Chuyển Nhân Sự */}
@@ -1782,6 +1780,7 @@ export default function OrganizationPage() {
         okText="Xác nhận điều chuyển"
         cancelText="Hủy"
         centered
+        forceRender
         zIndex={1060}
       >
         <Form form={transferForm} layout="vertical" className="mt-4">
@@ -1822,7 +1821,7 @@ export default function OrganizationPage() {
             }}
           </Form.Item>
 
-          <Form.Item name="reason" label="Lý do điều chuyển (Lưu vết Nhật ký Audit Log)">
+          <Form.Item name="reason" label="Lý do điều chuyển">
             <Input.TextArea
               rows={2}
               placeholder="Ví dụ: Luân chuyển chuyên môn, hỗ trợ dự án mới, tái cơ cấu nhân sự..."
@@ -1834,21 +1833,19 @@ export default function OrganizationPage() {
       {/* Modal Nhật Ký Lịch Sử Điều Chuyển Nhân Sự (Transfer Audit Log) */}
       <Modal
         title={
-          <div className="flex items-center justify-between gap-3 pr-6 pb-3 border-b border-slate-100">
+          <div className="flex items-center justify-between gap-3 pr-6 pb-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 border border-purple-200/80 flex items-center justify-center text-base shadow-2xs shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-200/80 dark:border-purple-800/80 flex items-center justify-center text-base shadow-2xs shrink-0">
                 <HistoryOutlined />
               </div>
               <div className="min-w-0">
-                <h4 className="font-bold text-slate-900 text-sm sm:text-base m-0 leading-tight truncate">Nhật Ký Điều Chuyển</h4>
-                <span className="text-[11px] text-slate-400 font-normal hidden sm:inline">Audit Log luân chuyển nhân sự giữa các phòng ban & đội nhóm</span>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base m-0 leading-tight truncate">Nhật Ký Điều Chuyển</h4>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-normal hidden sm:inline">Audit Log luân chuyển nhân sự giữa các phòng ban & đội nhóm</span>
               </div>
             </div>
-            <Badge
-              count={`${transferLogs.length} bản ghi`}
-              style={{ backgroundColor: '#faf5ff', color: '#7e22ce', border: '1px solid #e9d5ff', fontWeight: 600 }}
-              className="shrink-0"
-            />
+            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/80 shrink-0">
+              {transferLogs.length} bản ghi
+            </span>
           </div>
         }
         open={logModalOpen}
@@ -1864,10 +1861,10 @@ export default function OrganizationPage() {
             <Spin size="large" description="Đang tải lịch sử điều chuyển..." />
           </div>
         ) : transferLogs.length === 0 ? (
-          <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-            <HistoryOutlined className="text-3xl text-slate-300 mb-2" />
-            <p className="text-sm font-semibold text-slate-600 m-0">Chưa có bản ghi điều chuyển nào</p>
-            <p className="text-xs text-slate-400 m-0 mt-1">Khi bạn thực hiện điều chuyển nhân sự, lịch sử chi tiết sẽ lưu tại đây</p>
+          <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+            <HistoryOutlined className="text-3xl text-slate-300 dark:text-slate-600 mb-2" />
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 m-0">Chưa có bản ghi điều chuyển nào</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 m-0 mt-1">Khi bạn thực hiện điều chuyển nhân sự, lịch sử chi tiết sẽ lưu tại đây</p>
           </div>
         ) : (
           <div>
@@ -1889,10 +1886,10 @@ export default function OrganizationPage() {
                         const d = new Date(val);
                         return (
                           <div className="flex flex-col">
-                            <span className="text-xs font-bold text-slate-800">
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                               {d.toLocaleDateString('vi-VN')}
                             </span>
-                            <span className="text-[11px] text-slate-400 font-mono mt-0.5">
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
                               {d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
@@ -1907,8 +1904,8 @@ export default function OrganizationPage() {
                         <div className="flex items-center gap-2.5">
                           <Avatar size={34} icon={<UserOutlined />} className="bg-slate-800 text-white shrink-0 font-bold" />
                           <div className="truncate min-w-0">
-                            <div className="font-bold text-xs text-slate-900 truncate">{item.user?.name || `User #${item.userId}`}</div>
-                            <div className="text-[11px] text-slate-400 truncate">{item.user?.email}</div>
+                            <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">{item.user?.name || `User #${item.userId}`}</div>
+                            <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate">{item.user?.email}</div>
                           </div>
                         </div>
                       ),
@@ -1920,14 +1917,14 @@ export default function OrganizationPage() {
                       render: (_, item: TransferLogItem) => (
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1.5 text-xs">
-                            <span className="text-slate-400 font-bold text-[10px] w-6 shrink-0">Từ:</span>
-                            <span className="font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/80 truncate max-w-[190px]">
+                            <span className="text-slate-400 dark:text-slate-500 font-bold text-[10px] w-6 shrink-0">Từ:</span>
+                            <span className="font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/80 dark:border-slate-700 truncate max-w-[190px]">
                               {item.fromDeptName || 'Chưa thuộc phòng ban'}{item.fromTeamName ? ` • ${item.fromTeamName}` : ''}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5 text-xs">
-                            <span className="text-blue-600 font-bold text-[10px] w-6 shrink-0">Đến:</span>
-                            <span className="font-semibold text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 truncate max-w-[190px]">
+                            <span className="text-blue-600 dark:text-blue-400 font-bold text-[10px] w-6 shrink-0">Đến:</span>
+                            <span className="font-semibold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800 truncate max-w-[190px]">
                               {item.toDeptName || 'Chưa thuộc phòng ban'}{item.toTeamName ? ` • ${item.toTeamName}` : ''}
                             </span>
                           </div>
@@ -1941,11 +1938,11 @@ export default function OrganizationPage() {
                       width: 270,
                       render: (val: string | null) => (
                         val ? (
-                          <div className="bg-slate-50 border border-slate-200/70 rounded-lg px-3 py-1.5 text-xs text-slate-700 leading-relaxed">
+                          <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                             <span className="italic font-normal">"{val}"</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-400 italic">— Không ghi chú —</span>
+                          <span className="text-xs text-slate-400 dark:text-slate-500 italic">— Không ghi chú —</span>
                         )
                       ),
                     },
@@ -1956,10 +1953,10 @@ export default function OrganizationPage() {
                       width: 160,
                       render: (val: string | null) => (
                         <div className="flex items-center gap-2">
-                          <Avatar size={24} className="bg-purple-100 text-purple-700 text-xs font-bold shrink-0">
+                          <Avatar size={24} className="bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-xs font-bold shrink-0">
                             {(val || 'Q')[0].toUpperCase()}
                           </Avatar>
-                          <span className="text-xs font-medium text-slate-700 truncate" title={val || 'Quản trị viên'}>
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate" title={val || 'Quản trị viên'}>
                             {val || 'Quản trị viên'}
                           </span>
                         </div>
@@ -1978,15 +1975,15 @@ export default function OrganizationPage() {
                 const timeStr = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
                 return (
-                  <div key={item.id} className="p-3.5 bg-slate-50/70 hover:bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-2.5 transition-all">
+                  <div key={item.id} className="p-3.5 bg-slate-50/70 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xs space-y-2.5 transition-all">
                     {/* Top Row: Date & Performer */}
-                    <div className="flex items-center justify-between gap-2 border-b border-slate-200/70 pb-2">
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-200/70 dark:border-slate-800 pb-2">
                       <div className="flex items-center gap-1.5 text-xs">
-                        <ClockCircleOutlined className="text-slate-400 text-xs" />
-                        <span className="font-bold text-slate-700">{dateStr}</span>
-                        <span className="font-mono text-slate-400 text-[11px]">{timeStr}</span>
+                        <ClockCircleOutlined className="text-slate-400 dark:text-slate-500 text-xs" />
+                        <span className="font-bold text-slate-700 dark:text-slate-300">{dateStr}</span>
+                        <span className="font-mono text-slate-400 dark:text-slate-500 text-[11px]">{timeStr}</span>
                       </div>
-                      <div className="flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-purple-100 shrink-0">
+                      <div className="flex items-center gap-1 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-purple-100 dark:border-purple-800/80 shrink-0">
                         <UserOutlined className="text-[10px]" />
                         <span className="truncate max-w-[110px]">{item.changedByName || 'Quản trị viên'}</span>
                       </div>
@@ -1996,35 +1993,35 @@ export default function OrganizationPage() {
                     <div className="flex items-center gap-2.5">
                       <Avatar size={36} icon={<UserOutlined />} className="bg-slate-800 text-white shrink-0 font-bold" />
                       <div className="min-w-0 flex-1">
-                        <div className="font-bold text-xs text-slate-900 truncate">
+                        <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
                           {item.user?.name || `User #${item.userId}`}
                         </div>
-                        <div className="text-[11px] text-slate-400 truncate">
+                        <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
                           {item.user?.email || 'Chưa có email'}
                         </div>
                       </div>
                     </div>
 
                     {/* Transfer Route Card (Bố cục Timeline sành điệu) */}
-                    <div className="p-3 bg-white rounded-xl border border-slate-200/90 space-y-2 shadow-2xs">
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 space-y-2 shadow-2xs">
                       {/* Từ phòng ban */}
                       <div className="flex items-center gap-2 text-xs">
-                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded shrink-0">TỪ</span>
-                        <span className="font-medium text-slate-700 truncate min-w-0">
+                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 px-2 py-0.5 rounded shrink-0">TỪ</span>
+                        <span className="font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">
                           {item.fromDeptName || 'Chưa thuộc phòng ban'}{item.fromTeamName ? ` • ${item.fromTeamName}` : ''}
                         </span>
                       </div>
 
                       {/* Mũi tên và nhãn Điều chuyển sang */}
-                      <div className="flex items-center gap-2 text-xs text-blue-600 font-semibold pl-1">
+                      <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-semibold pl-1">
                         <ArrowDownOutlined className="text-blue-500 text-[11px] animate-bounce" />
                         <span className="text-[11px] tracking-tight">Điều chuyển sang</span>
                       </div>
 
                       {/* Đến phòng ban */}
                       <div className="flex items-center gap-2 text-xs">
-                        <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded shrink-0">ĐẾN</span>
-                        <span className="font-bold text-blue-900 truncate min-w-0">
+                        <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded shrink-0">ĐẾN</span>
+                        <span className="font-bold text-blue-900 dark:text-blue-200 truncate min-w-0">
                           {item.toDeptName || 'Chưa thuộc phòng ban'}{item.toTeamName ? ` • ${item.toTeamName}` : ''}
                         </span>
                       </div>
@@ -2032,8 +2029,8 @@ export default function OrganizationPage() {
 
                     {/* Reason note if present */}
                     {item.reason && (
-                      <div className="text-xs text-slate-600 bg-amber-50/80 border border-amber-200/80 rounded-xl p-2.5 leading-relaxed">
-                        <span className="font-semibold text-amber-800 mr-1">Lý do:</span>
+                      <div className="text-xs text-slate-600 dark:text-slate-300 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-2.5 leading-relaxed">
+                        <span className="font-semibold text-amber-800 dark:text-amber-400 mr-1">Lý do:</span>
                         <span className="italic">"{item.reason}"</span>
                       </div>
                     )}
@@ -2060,6 +2057,21 @@ export default function OrganizationPage() {
         .custom-matrix-tabs .ant-tabs-tab-active {
           background: #ffffff !important;
           border-color: #cbd5e1 !important;
+        }
+
+        .dark .custom-matrix-tabs .ant-tabs-tab {
+          border-color: #1e293b !important;
+          background: #0f172a !important;
+        }
+        .dark .custom-matrix-tabs .ant-tabs-tab-active {
+          background: #1e293b !important;
+          border-color: #334155 !important;
+        }
+        .dark .custom-matrix-tabs .ant-tabs-tab .ant-tabs-tab-btn {
+          color: #94a3b8 !important;
+        }
+        .dark .custom-matrix-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+          color: #38bdf8 !important;
         }
 
         /* CSS chuẩn cho Cây Sơ Đồ Tổ Chức (Hierarchical Org Tree) */
@@ -2092,6 +2104,10 @@ export default function OrganizationPage() {
           top: 0;
           height: 2px;
           background-color: #cbd5e1;
+        }
+        .dark .org-branch::before,
+        .dark .org-branch::after {
+          background-color: #334155 !important;
         }
 
         .org-branch::before {
@@ -2126,6 +2142,9 @@ export default function OrganizationPage() {
           height: 20px;
           background-color: #cbd5e1;
           margin-bottom: 2px;
+        }
+        .dark .org-branch-line-down {
+          background-color: #334155 !important;
         }
       `}</style>
     </div>

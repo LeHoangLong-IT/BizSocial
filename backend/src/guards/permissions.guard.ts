@@ -44,6 +44,16 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
+    // Allow user to READ and UPDATE their own user profile
+    if (
+      module === 'User' &&
+      (action === 'READ' || action === 'UPDATE') &&
+      request.params?.id &&
+      String(user.id) === String(request.params.id)
+    ) {
+      return true;
+    }
+
     const moduleRecord = await prisma.module.findUnique({
       where: { name: module },
     });

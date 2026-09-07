@@ -15,17 +15,9 @@ import {
   Avatar,
   DatePicker,
   Tooltip,
-  Modal,
   Form,
-  Select,
-  Row,
-  Col,
-  Upload,
-  Empty,
   Popover,
   Badge,
-  Pagination,
-  Drawer,
   App
 } from 'antd';
 import {
@@ -41,38 +33,21 @@ import {
   AppstoreOutlined,
   UnorderedListOutlined,
   ReloadOutlined,
-  UploadOutlined,
-  PictureOutlined,
-  MailOutlined,
-  PhoneOutlined,
   DownOutlined,
   UndoOutlined,
   ExclamationCircleOutlined,
-  ClearOutlined,
   FileExcelOutlined
 } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 import type { ColumnsType } from 'antd/es/table';
 
+import { UserModal } from '@/components/users/UserModal';
+import { UserFilterPopover } from '@/components/users/UserFilterPopover';
+import { UserGridView, UserDataType } from '@/components/users/UserGridView';
+import { UserPrintReport } from '@/components/users/UserPrintReport';
+
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
-
-// Interface definition
-interface UserDataType {
-  key: string;
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  roleId: string;
-  department: string;
-  departmentId: string;
-  createdOn: string;
-  createdAtRaw?: number;
-  status: 'Active' | 'Inactive';
-  avatarSeed: string;
-}
 
 type SortType = 'none' | 'a-z' | 'z-a' | 'newest' | 'oldest' | 'high' | 'low';
 
@@ -85,7 +60,11 @@ export default function UserManagementPage() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [form] = Form.useForm();
+  
+  // Real DB Data states
   const [users, setUsers] = useState<UserDataType[]>([]);
+  const [roles, setRoles] = useState<{ id: number; name: string }[]>([]);
+  const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Advanced Filter states
@@ -113,8 +92,58 @@ export default function UserManagementPage() {
   }, []);
 
   const activeViewMode = isMobile ? 'grid' : viewMode;
-
   const { token } = useAuthStore();
+
+  // Fetch Users, Roles, and Departments from real Backend DB
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get('http://localhost:3001/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const mappedData: UserDataType[] = res.data.map((u: any) => ({
+        key: u.id.toString(),
+        id: u.id,
+        name: u.name || 'No Name',
+        email: u.email,
+        phone: u.phone || '',
+        role: u.role?.name || 'N/A',
+        roleId: u.roleId?.toString() || '',
+        department: u.department?.name || 'N/A',
+        departmentId: u.departmentId?.toString() || '',
+        createdOn: new Date(u.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        createdAtRaw: new Date(u.createdAt).getTime(),
+        status: u.deletedAt ? 'Inactive' : 'Active',
+        avatarSeed: u.name || 'User',
+      }));
+      setUsers(mappedData);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRolesAndDepartments = async () => {
+    if (!token) return;
+    try {
+      const [rolesRes, deptsRes] = await Promise.all([
+        axios.get('http://localhost:3001/roles', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('http://localhost:3001/organization/departments', { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      setRoles(rolesRes.data || []);
+      setDepartments(deptsRes.data || []);
+    } catch (error) {
+      console.error('Error fetching metadata (roles/departments):', error);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchUsers();
+      fetchRolesAndDepartments();
+    }
+  }, [token]);
 
   const handleOpenModal = (mode: 'add' | 'edit', record?: UserDataType) => {
     setModalMode(mode);
@@ -135,43 +164,6 @@ export default function UserManagementPage() {
     }
     setIsModalOpen(true);
   };
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get('http://localhost:3001/users', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const mappedData = res.data.map((u: any) => ({
-        key: u.id.toString(),
-        id: u.id,
-        name: u.name || 'No Name',
-        email: u.email,
-        phone: u.phone || '',
-        role: u.role?.name || 'N/A',
-        roleId: u.roleId?.toString(),
-        department: u.department?.name || 'N/A',
-        departmentId: u.departmentId?.toString(),
-        createdOn: new Date(u.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-        createdAtRaw: new Date(u.createdAt).getTime(),
-        status: u.deletedAt ? 'Inactive' : 'Active',
-        avatarSeed: u.name || 'User',
-      }));
-      setUsers(mappedData);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchUsers();
-    }
-  }, [token]);
 
   // Soft Delete Handler
   const handleSoftDelete = (id: number, name: string) => {
@@ -275,17 +267,15 @@ export default function UserManagementPage() {
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(excelRows);
-
-    // Căn chỉnh độ rộng cột tự động
     worksheet['!cols'] = [
-      { wch: 10 }, // Mã User
-      { wch: 22 }, // Họ và tên
-      { wch: 28 }, // Email
-      { wch: 16 }, // SĐT
-      { wch: 16 }, // Vai trò
-      { wch: 16 }, // Phòng ban
-      { wch: 16 }, // Ngày tạo
-      { wch: 16 }, // Trạng thái
+      { wch: 10 },
+      { wch: 22 },
+      { wch: 28 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 16 },
     ];
 
     const workbook = XLSX.utils.book_new();
@@ -358,6 +348,11 @@ export default function UserManagementPage() {
     setFilterDepartment('all');
     setFilterStatus('all');
     setDateRange(null);
+    setFilterOpen(false);
+    setMobileFilterOpen(false);
+  };
+
+  const closeFilters = () => {
     setFilterOpen(false);
     setMobileFilterOpen(false);
   };
@@ -481,12 +476,6 @@ export default function UserManagementPage() {
       }
     });
 
-  // Paginated users for Grid View
-  const paginatedGridUsers = filteredUsers.slice(
-    (gridPage - 1) * gridPageSize,
-    gridPage * gridPageSize
-  );
-
   const columns: ColumnsType<UserDataType> = [
     {
       title: 'Người dùng',
@@ -494,10 +483,10 @@ export default function UserManagementPage() {
       key: 'name',
       render: (text, record) => (
         <Space size="middle">
-          <Avatar src={`https://api.dicebear.com/7.x/notionists/svg?seed=${record.avatarSeed}`} size={38} className="bg-gray-100" />
+          <Avatar src={`https://api.dicebear.com/7.x/notionists/svg?seed=${record.avatarSeed}`} size={38} className="bg-gray-100 dark:bg-slate-800" />
           <div className="flex flex-col">
-            <Text strong className="text-gray-800 leading-tight">{text}</Text>
-            <span className="text-xs text-gray-400 font-normal mt-0.5">ID: #{record.id}</span>
+            <Text strong className="text-slate-900 dark:text-white leading-tight">{text}</Text>
+            <span className="text-xs text-slate-400 font-normal mt-0.5">ID: #{record.id}</span>
           </div>
         </Space>
       ),
@@ -506,31 +495,31 @@ export default function UserManagementPage() {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      render: (text) => <Text className="text-gray-500">{text}</Text>
+      render: (text) => <Text className="text-slate-600 dark:text-slate-400">{text}</Text>
     },
     {
       title: 'SĐT',
       dataIndex: 'phone',
       key: 'phone',
-      render: (text) => <Text className="text-gray-500">{text || '—'}</Text>
+      render: (text) => <Text className="text-slate-600 dark:text-slate-400">{text || '—'}</Text>
     },
     {
       title: 'Vai trò',
       dataIndex: 'role',
       key: 'role',
-      render: (text) => <Text className="text-gray-500">{text}</Text>
+      render: (text) => <Text className="text-slate-600 dark:text-slate-400 font-medium">{text}</Text>
     },
     {
       title: 'Phòng ban',
       dataIndex: 'department',
       key: 'department',
-      render: (text) => <Text className="text-gray-500">{text}</Text>
+      render: (text) => <Text className="text-slate-600 dark:text-slate-400">{text}</Text>
     },
     {
       title: 'Ngày tạo',
       dataIndex: 'createdOn',
       key: 'createdOn',
-      render: (text) => <Text className="text-gray-500">{text}</Text>
+      render: (text) => <Text className="text-slate-500 dark:text-slate-400">{text}</Text>
     },
     {
       title: 'Trạng thái',
@@ -538,9 +527,9 @@ export default function UserManagementPage() {
       key: 'status',
       render: (status) => (
         <Tag
-          className={`border-0 px-2 py-0.5 rounded-md font-medium ${status === 'Active'
-            ? 'bg-emerald-50 text-emerald-600'
-            : 'bg-rose-50 text-rose-500'
+          className={`border px-2.5 py-0.5 rounded-full font-bold text-[11px] ${status === 'Active'
+            ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-800/80'
+            : 'bg-rose-50 dark:bg-rose-950/60 text-rose-500 dark:text-rose-400 border-rose-200/80 dark:border-rose-800/80'
             }`}
         >
           {status}
@@ -566,8 +555,8 @@ export default function UserManagementPage() {
           actionItems.push(
             {
               key: 'restore',
-              icon: <UndoOutlined className="text-emerald-600" />,
-              label: <span className="text-emerald-600 font-medium">Khôi phục tài khoản</span>,
+              icon: <UndoOutlined className="text-emerald-600 dark:text-emerald-400" />,
+              label: <span className="text-emerald-600 dark:text-emerald-400 font-medium">Khôi phục tài khoản</span>,
               onClick: () => handleRestore(record.id, record.name),
             },
             { type: 'divider' },
@@ -601,8 +590,8 @@ export default function UserManagementPage() {
             <Button
               type="text"
               shape="circle"
-              icon={<MoreOutlined className="rotate-90 text-gray-400" />}
-              className="border border-gray-200 hover:bg-gray-50"
+              icon={<MoreOutlined className="rotate-90 text-slate-400 dark:text-slate-500" />}
+              className="border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
             />
           </Dropdown>
         );
@@ -610,110 +599,47 @@ export default function UserManagementPage() {
     },
   ];
 
-  // Filter Popover Content
+  // Reusable Filter Popover Content
   const filterPopoverContent = (
-    <div className="w-72 sm:w-80 p-2.5 flex flex-col gap-3">
-      <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-        <span className="font-semibold text-slate-800 text-sm">Bộ lọc nâng cao</span>
-        {activeFilterCount > 0 && (
-          <Button
-            type="link"
-            size="small"
-            icon={<ClearOutlined />}
-            onClick={resetFilters}
-            className="text-xs p-0 text-gray-400 hover:text-red-500"
-          >
-            Đặt lại ({activeFilterCount})
-          </Button>
-        )}
-      </div>
-
-      <div>
-        <label className="text-xs font-medium text-gray-500 mb-1 block">Khoảng thời gian (Ngày tạo)</label>
-        <RangePicker
-          className="w-full text-xs rounded-md"
-          format="DD/MM/YYYY"
-          placeholder={['Từ ngày', 'Đến ngày']}
-          value={dateRange}
-          onChange={(dates) => setDateRange(dates)}
-        />
-      </div>
-
-      <div>
-        <label className="text-xs font-medium text-gray-500 mb-1 block">Vai trò (Role)</label>
-        <Select
-          className="w-full"
-          value={filterRole}
-          onChange={setFilterRole}
-          options={[
-            { value: 'all', label: 'Tất cả vai trò' },
-            { value: '1', label: 'Super Admin' },
-            { value: '2', label: 'Manager' },
-            { value: '3', label: 'Leader' },
-            { value: '4', label: 'Employee' },
-            { value: '5', label: 'Intern' },
-          ]}
-        />
-      </div>
-
-      <div>
-        <label className="text-xs font-medium text-gray-500 mb-1 block">Phòng ban (Department)</label>
-        <Select
-          className="w-full"
-          value={filterDepartment}
-          onChange={setFilterDepartment}
-          options={[
-            { value: 'all', label: 'Tất cả phòng ban' },
-            { value: '1', label: 'Finance' },
-            { value: '2', label: 'Sales' },
-            { value: '3', label: 'HR' },
-            { value: '4', label: 'IT' },
-          ]}
-        />
-      </div>
-
-      <div>
-        <label className="text-xs font-medium text-gray-500 mb-1 block">Trạng thái (Status)</label>
-        <Select
-          className="w-full"
-          value={filterStatus}
-          onChange={setFilterStatus}
-          options={[
-            { value: 'all', label: 'Tất cả trạng thái' },
-            { value: 'Active', label: 'Đang hoạt động (Active)' },
-            { value: 'Inactive', label: 'Đã vô hiệu hóa (Inactive)' },
-          ]}
-        />
-      </div>
-
-      <div className="pt-2 border-t border-gray-100 flex justify-end gap-2">
-        <Button size="small" onClick={() => setFilterOpen(false)}>Đóng</Button>
-        <Button size="small" type="primary" className="!bg-slate-800" onClick={() => setFilterOpen(false)}>Áp dụng</Button>
-      </div>
-    </div>
+    <UserFilterPopover
+      filterRole={filterRole}
+      setFilterRole={setFilterRole}
+      filterDepartment={filterDepartment}
+      setFilterDepartment={setFilterDepartment}
+      filterStatus={filterStatus}
+      setFilterStatus={setFilterStatus}
+      dateRange={dateRange}
+      setDateRange={setDateRange}
+      activeFilterCount={activeFilterCount}
+      resetFilters={resetFilters}
+      closeFilters={closeFilters}
+      roles={roles}
+      departments={departments}
+    />
   );
 
   return (
     <div className="flex flex-col gap-4 print:p-0">
-      {/* Header Section - Grid / Responsive Layout matching screenshot */}
+      {/* Header Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start sm:items-center mb-1 print:hidden">
         <div>
-          <Title level={3} className="!mb-0 font-bold text-slate-800 tracking-tight text-xl sm:text-2xl">
+          <Title level={3} className="!mb-0 font-bold text-slate-800 dark:text-white tracking-tight text-xl sm:text-2xl">
             Quản lý User
           </Title>
         </div>
 
         {/* Action Controls Row */}
         <div className="flex items-center gap-2 flex-wrap sm:justify-end w-full sm:w-auto">
-          {/* View Mode Switcher Segmented Button (Hidden on Mobile, Locked to Grid) */}
-          <div className="hidden sm:flex bg-slate-100 p-1 rounded-lg items-center gap-1 border border-slate-200/60 shadow-xs">
+          {/* View Mode Switcher */}
+          <div className="hidden sm:flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg items-center gap-1 border border-slate-200/60 dark:border-slate-700 shadow-xs">
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${viewMode === 'table'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                }`}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
+                viewMode === 'table'
+                  ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700'
+              }`}
               title="Dạng danh sách"
             >
               <UnorderedListOutlined className="text-sm" />
@@ -721,10 +647,11 @@ export default function UserManagementPage() {
             <button
               type="button"
               onClick={() => setViewMode('grid')}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${viewMode === 'grid'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                }`}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
+                viewMode === 'grid'
+                  ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700'
+              }`}
               title="Dạng lưới (Grid)"
             >
               <AppstoreOutlined className="text-sm" />
@@ -734,7 +661,7 @@ export default function UserManagementPage() {
           <Button
             icon={<PrinterOutlined />}
             onClick={handlePrint}
-            className="text-slate-700 font-medium text-xs h-8 px-3 rounded-lg border-slate-200 hover:text-teal-600 shadow-none"
+            className="text-slate-700 dark:text-slate-200 font-medium text-xs h-8 px-3 rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:text-teal-600 dark:hover:text-teal-400 shadow-none"
           >
             In
           </Button>
@@ -744,7 +671,7 @@ export default function UserManagementPage() {
               items: [
                 {
                   key: 'excel',
-                  icon: <FileExcelOutlined className="text-emerald-600" />,
+                  icon: <FileExcelOutlined className="text-emerald-600 dark:text-emerald-400" />,
                   label: 'Xuất file Excel (.xlsx)',
                   onClick: handleExportExcel,
                 },
@@ -753,9 +680,9 @@ export default function UserManagementPage() {
             trigger={['click']}
           >
             <Button
-              className="text-slate-700 font-medium text-xs h-8 px-3 rounded-lg border-slate-200 shadow-none flex items-center gap-1"
+              className="text-slate-700 dark:text-slate-200 font-medium text-xs h-8 px-3 rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-none flex items-center gap-1"
             >
-              <DownloadOutlined className="text-xs text-slate-500" />
+              <DownloadOutlined className="text-xs text-slate-500 dark:text-slate-400" />
               <span>Xuất file</span>
               <DownOutlined className="text-[9px] text-slate-400" />
             </Button>
@@ -764,7 +691,7 @@ export default function UserManagementPage() {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            className="bg-slate-900 hover:bg-slate-800 border-0 font-medium text-xs h-8 px-3.5 rounded-lg shadow-xs"
+            className="bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 border-0 font-medium text-xs h-8 px-3.5 rounded-lg shadow-xs"
             onClick={() => handleOpenModal('add')}
           >
             Thêm User
@@ -772,98 +699,13 @@ export default function UserManagementPage() {
         </div>
       </div>
 
-      {/* Bảng báo cáo in ấn chuyên dụng (Chỉ hiển thị khi in) */}
-      <div className="hidden print:block w-full print-only-view">
-        <div className="border-b-2 border-slate-900 pb-3 mb-5">
-          <div className='text-center'>
-            <h1 className="text-xl font-bold text-slate-900 uppercase tracking-wide m-0">
-              DANH SÁCH NGƯỜI DÙNG HỆ THỐNG
-            </h1>
-            <p className="text-xs text-slate-500 m-0 mt-1 font-medium">
-              BizSocial ERP — Quản trị người dùng & Phân quyền
-            </p>
-          </div>
-          <div className="mt-5 text-xs text-slate-600 flex justify-between items-end">
-            <p className="m-0 font-medium">
-              Thời gian in: {new Date().toLocaleDateString('vi-VN')} {new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-            </p>
-            <p className="m-0 text-slate-400 mt-0.5">
-              Tổng số nhân sự: {filteredUsers.length} người
-            </p>
-          </div>
-        </div>
+      {/* Report Table View for Printing */}
+      <UserPrintReport users={filteredUsers} />
 
-        <table className="w-full border-collapse border border-slate-300 text-xs">
-          <thead>
-            <tr className="bg-slate-100 text-slate-900 font-semibold">
-              <th className="border border-slate-300 px-2.5 py-2 text-center w-12">STT</th>
-              <th className="border border-slate-300 px-3 py-2 text-left w-48">Họ và tên</th>
-              <th className="border border-slate-300 px-3 py-2 text-left">Email</th>
-              <th className="border border-slate-300 px-2.5 py-2 text-center w-28">Số điện thoại</th>
-              <th className="border border-slate-300 px-2.5 py-2 text-center w-28">Vai trò</th>
-              <th className="border border-slate-300 px-2.5 py-2 text-center w-24">Phòng ban</th>
-              <th className="border border-slate-300 px-2.5 py-2 text-center w-28">Ngày tạo</th>
-              <th className="border border-slate-300 px-2 py-2 text-center w-24">Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((u, idx) => (
-              <tr key={u.id} className={idx % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'}>
-                <td className="border border-slate-300 px-2.5 py-2 text-center text-slate-500 font-normal">
-                  {idx + 1}
-                </td>
-                <td className="border border-slate-300 px-3 py-2 font-medium text-slate-900 whitespace-nowrap">
-                  {u.name} <span className="text-[10px] text-slate-400 font-normal">#{u.id}</span>
-                </td>
-                <td className="border border-slate-300 px-3 py-2 text-slate-700 font-normal whitespace-nowrap">
-                  {u.email}
-                </td>
-                <td className="border border-slate-300 px-2.5 py-2 text-center text-slate-700 font-normal whitespace-nowrap">
-                  {u.phone || '—'}
-                </td>
-                <td className="border border-slate-300 px-2.5 py-2 text-center text-slate-800 font-medium whitespace-nowrap">
-                  {u.role}
-                </td>
-                <td className="border border-slate-300 px-2.5 py-2 text-center text-slate-700 font-normal whitespace-nowrap">
-                  {u.department}
-                </td>
-                <td className="border border-slate-300 px-2.5 py-2 text-center text-slate-600 font-normal whitespace-nowrap">
-                  {u.createdOn}
-                </td>
-                <td className="border border-slate-300 px-2 py-2 text-center font-medium whitespace-nowrap">
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded text-[10px] ${u.status === 'Active'
-                      ? 'bg-emerald-100 text-emerald-800 font-medium'
-                      : 'bg-rose-100 text-rose-800 font-medium'
-                      }`}
-                  >
-                    {u.status === 'Active' ? 'Hoạt động' : 'Đã khóa'}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Chân trang in ấn */}
-        <div className="mt-8 pt-4 border-t border-slate-200 flex justify-between items-start text-xs text-slate-500">
-          <div>
-            <p className="m-0 font-medium text-slate-700">Ghi chú:</p>
-            <p className="m-0 text-[11px] text-slate-400">Báo cáo được trích xuất tự động từ phân hệ quản trị BizSocial ERP.</p>
-          </div>
-          <div className="text-center min-w-[160px]">
-            <p className="m-0 font-semibold text-slate-800">Người lập biểu</p>
-            <p className="m-0 text-[11px] text-slate-400 italic mt-0.5">(Ký, ghi rõ họ tên)</p>
-            <div className="h-14"></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Card Wrapper (Chỉ hiển thị khi xem trên Web) */}
-      <Card variant="borderless" className="shadow-sm rounded-xl overflow-hidden border border-gray-100 web-only-view" styles={{ body: { padding: 0 } }}>
-
+      {/* Main Card Wrapper (Web View) */}
+      <Card variant="borderless" className="shadow-sm rounded-xl overflow-hidden border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 web-only-view" styles={{ body: { padding: 0 } }}>
         {/* Filter & Search Toolbar */}
-        <div className="p-3 sm:p-4 border-b border-slate-100 bg-white gap-3 print:hidden">
+        <div className="p-3 sm:p-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 gap-3 print:hidden">
           {/* Desktop Filter Layout */}
           <div className="hidden sm:flex flex-row justify-between items-center gap-3">
             <div className="flex items-center gap-2.5">
@@ -877,6 +719,7 @@ export default function UserManagementPage() {
               />
               <RangePicker
                 className="rounded-lg text-xs"
+                style={{ width: 'fit-content', minWidth: '270px' }}
                 format="DD/MM/YYYY"
                 placeholder={['Từ ngày', 'Đến ngày']}
                 value={dateRange}
@@ -895,7 +738,7 @@ export default function UserManagementPage() {
                 <Badge count={activeFilterCount} offset={[-4, 4]} size="small">
                   <Button
                     icon={<FilterOutlined />}
-                    className={`rounded-lg text-xs font-medium h-8 ${activeFilterCount > 0 ? '!border-teal-600 !text-teal-700' : 'text-slate-600 border-slate-200'}`}
+                    className={`rounded-lg text-xs font-medium h-8 ${activeFilterCount > 0 ? '!border-teal-600 !text-teal-700 dark:!text-teal-400' : 'text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'}`}
                   >
                     Bộ lọc
                   </Button>
@@ -917,15 +760,14 @@ export default function UserManagementPage() {
                   icon={<ReloadOutlined />}
                   onClick={fetchUsers}
                   loading={loading}
-                  className="text-slate-500 rounded-lg h-8 w-8 p-0 flex items-center justify-center border-slate-200"
+                  className="text-slate-500 dark:text-slate-400 rounded-lg h-8 w-8 p-0 flex items-center justify-center border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                 />
               </Tooltip>
             </div>
           </div>
 
-          {/* Mobile Optimized Filter Layout */}
+          {/* Mobile Filter Layout */}
           <div className="flex sm:hidden flex-col gap-2.5">
-            {/* Row 1: Search Bar Full Width */}
             <Input
               placeholder="Tìm kiếm người dùng..."
               prefix={<SearchOutlined className="text-slate-400" />}
@@ -935,7 +777,6 @@ export default function UserManagementPage() {
               allowClear
             />
 
-            {/* Row 2: Date Range Picker Full Width */}
             <RangePicker
               className="w-full rounded-xl text-xs h-9 bg-white border-slate-200"
               format="DD/MM/YYYY"
@@ -944,14 +785,12 @@ export default function UserManagementPage() {
               onChange={(dates) => setDateRange(dates)}
             />
 
-            {/* Row 3: Action Bar (Filter, Sort, Refresh) */}
             <div className="grid grid-cols-3 gap-2 w-full">
-              {/* Mobile Filter Button (Triggers Popover Dropdown like Desktop) */}
               <Popover
                 content={filterPopoverContent}
                 trigger="click"
-                open={filterOpen}
-                onOpenChange={setFilterOpen}
+                open={mobileFilterOpen}
+                onOpenChange={setMobileFilterOpen}
                 placement="bottomLeft"
               >
                 <button
@@ -972,7 +811,6 @@ export default function UserManagementPage() {
                 </button>
               </Popover>
 
-              {/* Sort Dropdown */}
               <Dropdown menu={{ items: sortMenuItems }} trigger={['click']} placement="bottom">
                 <button
                   type="button"
@@ -980,334 +818,71 @@ export default function UserManagementPage() {
                 >
                   <SortAscendingOutlined className="text-xs" />
                   <span>Sắp xếp</span>
-                  <DownOutlined className="text-[9px] opacity-80" />
                 </button>
               </Dropdown>
 
-              {/* Refresh Button */}
               <button
                 type="button"
                 onClick={fetchUsers}
-                disabled={loading}
-                className="w-full text-slate-600 hover:text-slate-900 rounded-xl h-9 flex items-center justify-center border border-slate-200 bg-white hover:bg-slate-50 text-xs font-medium transition-all"
+                className="w-full bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 text-xs font-medium h-9 flex items-center justify-center gap-1 rounded-xl transition-all"
               >
-                <ReloadOutlined className={`text-xs ${loading ? 'animate-spin' : ''}`} />
-                <span className="ml-1">Làm mới</span>
+                <ReloadOutlined className="text-xs" />
+                <span>Làm mới</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* View content: Table or Grid */}
+        {/* Content Body: Table or Grid View */}
         {activeViewMode === 'table' ? (
-          <div className="overflow-x-auto">
-            <Table
-              columns={columns}
-              dataSource={filteredUsers}
-              loading={loading}
-              pagination={{
-                pageSize: 8,
-                showTotal: (total) => `Tổng cộng ${total} người dùng`,
-                className: 'px-4 pb-4 print:hidden flex-wrap',
-              }}
-              rowClassName="hover:bg-gray-50 transition-colors cursor-pointer"
-              className="custom-table"
-            />
-          </div>
+          <Table
+            columns={columns}
+            dataSource={filteredUsers}
+            loading={loading}
+            pagination={{
+              pageSize: 8,
+              showSizeChanger: true,
+              pageSizeOptions: ['8', '16', '24', '50'],
+              showTotal: (total, range) => (
+                <span className="text-xs text-slate-500">
+                  Hiển thị {range[0]}-{range[1]} trên {total} người dùng
+                </span>
+              ),
+            }}
+            rowKey="id"
+            className="custom-table"
+          />
         ) : (
-          <div className="p-4 sm:p-5 min-h-[300px]">
-            {filteredUsers.length === 0 ? (
-              <Empty description="Không tìm thấy người dùng phù hợp" className="py-12" />
-            ) : (
-              <>
-                {/* Employee Cards Grid (Matching Image 2 Reference) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
-                  {paginatedGridUsers.map((item) => {
-                    const isInactive = item.status === 'Inactive';
-                    const gridActionItems: any[] = [
-                      {
-                        key: 'edit',
-                        label: 'Cập nhật',
-                        icon: <EditOutlined />,
-                        onClick: () => handleOpenModal('edit', item),
-                      },
-                    ];
-
-                    if (isInactive) {
-                      gridActionItems.push(
-                        {
-                          key: 'restore',
-                          icon: <UndoOutlined className="text-emerald-600" />,
-                          label: <span className="text-emerald-600 font-medium">Khôi phục tài khoản</span>,
-                          onClick: () => handleRestore(item.id, item.name),
-                        },
-                        { type: 'divider' },
-                        {
-                          key: 'permanent_delete',
-                          label: 'Xóa vĩnh viễn',
-                          icon: <DeleteOutlined />,
-                          danger: true,
-                          onClick: () => handlePermanentDelete(item.id, item.name),
-                        }
-                      );
-                    } else {
-                      gridActionItems.push(
-                        { type: 'divider' },
-                        {
-                          key: 'deactivate',
-                          label: 'Vô hiệu hóa',
-                          icon: <DeleteOutlined />,
-                          danger: true,
-                          onClick: () => handleSoftDelete(item.id, item.name),
-                        }
-                      );
-                    }
-
-                    return (
-                      <Card
-                        key={item.id}
-                        className="rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all duration-200 relative bg-white overflow-hidden"
-                        styles={{ body: { padding: '20px 18px' } }}
-                      >
-                        {/* Status Tag & Action Dropdown Top Row */}
-                        <div className="flex justify-between items-center w-full mb-1">
-                          <Tag
-                            className={`border-0 px-2 py-0.5 rounded-md font-medium text-[11px] ${item.status === 'Active'
-                              ? 'bg-emerald-50 text-emerald-600'
-                              : 'bg-rose-50 text-rose-500'
-                              }`}
-                          >
-                            {item.status}
-                          </Tag>
-
-                          <Dropdown
-                            menu={{ items: gridActionItems }}
-                            trigger={['click']}
-                            placement="bottomRight"
-                          >
-                            <Button
-                              type="text"
-                              shape="circle"
-                              size="small"
-                              icon={<MoreOutlined className="rotate-90 text-slate-400" />}
-                              className="hover:bg-slate-100"
-                            />
-                          </Dropdown>
-                        </div>
-
-                        {/* Centered Employee Card Details (Matching Screenshot 2) */}
-                        <div className="flex flex-col items-center text-center">
-                          <Avatar
-                            src={`https://api.dicebear.com/7.x/notionists/svg?seed=${item.avatarSeed}`}
-                            size={76}
-                            className="bg-slate-50 ring-4 ring-slate-50 shadow-xs mb-3 border border-slate-100"
-                          />
-
-                          <Text strong className="text-slate-800 text-base sm:text-lg font-bold leading-tight hover:text-teal-600 transition-colors">
-                            {item.name}
-                          </Text>
-
-                          <span className="text-xs sm:text-sm font-normal text-slate-500 mt-0.5">
-                            {item.role || 'Nhân viên'}
-                          </span>
-
-                          {item.department && item.department !== 'N/A' && (
-                            <span className="inline-block mt-2 text-xs font-medium bg-teal-50/80 text-teal-700 border border-teal-100 px-3 py-0.5 rounded-md">
-                              {item.department}
-                            </span>
-                          )}
-
-                          {/* Divider Line */}
-                          <div className="w-full border-t border-slate-100/90 my-3.5"></div>
-
-                          {/* Contact Info: Email & Phone */}
-                          <div className="w-full flex flex-col gap-1.5 text-center">
-                            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 truncate">
-                              <MailOutlined className="text-slate-400 shrink-0 text-xs" />
-                              <span className="truncate">{item.email}</span>
-                            </div>
-                            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
-                              <PhoneOutlined className="text-slate-400 shrink-0 text-xs" />
-                              <span>{item.phone || 'Chưa có SĐT'}</span>
-                            </div>
-                          </div>
-
-                          {/* Action Button at Bottom */}
-                          <div className="w-full mt-4">
-                            <Button
-                              size="small"
-                              icon={<EditOutlined />}
-                              onClick={() => handleOpenModal('edit', item)}
-                              className="w-full rounded-lg text-xs font-medium text-slate-700 border-slate-200 hover:text-teal-600 hover:border-teal-300 h-8"
-                            >
-                              Chỉnh sửa
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-
-                {/* Grid Pagination */}
-                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 print:hidden bg-slate-50/60 p-3 rounded-xl border border-slate-100">
-                  <div className="text-xs text-slate-500 font-medium">
-                    Hiển thị {(gridPage - 1) * gridPageSize + 1} - {Math.min(gridPage * gridPageSize, filteredUsers.length)} trong tổng số {filteredUsers.length} người dùng
-                  </div>
-                  <Pagination
-                    current={gridPage}
-                    pageSize={gridPageSize}
-                    total={filteredUsers.length}
-                    onChange={(p, ps) => {
-                      setGridPage(p);
-                      setGridPageSize(ps);
-                    }}
-                    size="small"
-                    showSizeChanger
-                    pageSizeOptions={['8', '16', '24', '32']}
-                  />
-                </div>
-              </>
-            )}
+          <div className="p-4">
+            <UserGridView
+              users={filteredUsers}
+              totalCount={filteredUsers.length}
+              gridPage={gridPage}
+              gridPageSize={gridPageSize}
+              setGridPage={setGridPage}
+              setGridPageSize={setGridPageSize}
+              onEdit={(rec) => handleOpenModal('edit', rec)}
+              onRestore={handleRestore}
+              onSoftDelete={handleSoftDelete}
+              onPermanentDelete={handlePermanentDelete}
+            />
           </div>
         )}
       </Card>
 
-      {/* Modal Add/Edit User */}
-      <Modal
-        centered
-        title={
-          <div className="border-b border-gray-100 pb-3 -mx-6 px-6 mb-4">
-            <Title level={4} className="!mb-0 font-semibold">{modalMode === 'add' ? 'Thêm mới Người dùng' : 'Cập nhật Người dùng'}</Title>
-          </div>
-        }
-        open={isModalOpen}
+      {/* User Add / Edit Modal Component */}
+      <UserModal
+        isOpen={isModalOpen}
+        modalMode={modalMode}
+        form={form}
         onCancel={() => setIsModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsModalOpen(false)}>
-            Hủy
-          </Button>,
-          <Button key="submit" type="primary" onClick={handleModalOk} className="bg-[#1e293b] hover:bg-slate-700">
-            Lưu thay đổi
-          </Button>,
-        ]}
-        width={700}
-        closeIcon={<div className="bg-gray-50 rounded-full w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 mt-2">✕</div>}
-        styles={{ body: { padding: 24 } }}
-      >
-        <Form form={form} layout="vertical" requiredMark={false}>
+        onOk={handleModalOk}
+        roles={roles}
+        departments={departments}
+        loading={loading}
+      />
 
-          <div className="mb-6">
-            <div className="text-sm font-medium mb-2">Ảnh đại diện</div>
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 border border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 text-gray-400">
-                <PictureOutlined className="text-2xl" />
-              </div>
-              <div>
-                <Upload showUploadList={false}>
-                  <Button icon={<UploadOutlined />} type="primary" className="bg-[#1e293b] hover:bg-slate-700 font-medium">
-                    Tải ảnh lên
-                  </Button>
-                </Upload>
-                <div className="text-xs text-gray-400 mt-2">Định dạng JPG hoặc PNG, dung lượng tối đa 5MB.</div>
-              </div>
-            </div>
-          </div>
-
-          <Form.Item
-            name="name"
-            label={<span className="font-medium">Họ và tên <span className="text-red-500">*</span></span>}
-            rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
-          >
-            <Input size="large" placeholder="Nhập họ và tên" />
-          </Form.Item>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="role"
-                label={<span className="font-medium">Vai trò <span className="text-red-500">*</span></span>}
-                rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
-              >
-                <Select size="large" placeholder="Chọn vai trò">
-                  <Select.Option value="1">Super Admin</Select.Option>
-                  <Select.Option value="2">Manager</Select.Option>
-                  <Select.Option value="3">Leader</Select.Option>
-                  <Select.Option value="4">Employee</Select.Option>
-                  <Select.Option value="5">Intern</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="department"
-                label={<span className="font-medium">Phòng ban <span className="text-red-500">*</span></span>}
-                rules={[{ required: true, message: 'Vui lòng chọn phòng ban' }]}
-              >
-                <Select size="large" placeholder="Chọn phòng ban">
-                  <Select.Option value="1">Finance</Select.Option>
-                  <Select.Option value="2">Sales</Select.Option>
-                  <Select.Option value="3">HR</Select.Option>
-                  <Select.Option value="4">IT</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="email"
-                label={<span className="font-medium">Email <span className="text-red-500">*</span></span>}
-                rules={[{ required: true, type: 'email', message: 'Email không đúng định dạng' }]}
-              >
-                <Input size="large" placeholder="email@example.com" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="phone"
-                label={<span className="font-medium">Số điện thoại</span>}
-              >
-                <Input size="large" placeholder="0123456789" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="password"
-                label={
-                  <span className="font-medium">
-                    {modalMode === 'add' ? 'Mật khẩu' : 'Mật khẩu mới (Bỏ trống nếu không đổi)'}
-                    {modalMode === 'add' && <span className="text-red-500"> *</span>}
-                  </span>
-                }
-                rules={[{ required: modalMode === 'add', message: 'Vui lòng nhập mật khẩu' }]}
-              >
-                <Input.Password size="large" placeholder="******" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="confirmPassword"
-                label={
-                  <span className="font-medium">
-                    {modalMode === 'add' ? 'Xác nhận mật khẩu' : 'Xác nhận mật khẩu mới'}
-                    {modalMode === 'add' && <span className="text-red-500"> *</span>}
-                  </span>
-                }
-                rules={[{ required: modalMode === 'add', message: 'Vui lòng xác nhận mật khẩu' }]}
-              >
-                <Input.Password size="large" placeholder="******" />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Modal>
-
-      {/* Custom Styles overrides for Table & Print mode */}
+      {/* Custom Styles */}
       <style jsx global>{`
         .custom-table .ant-table {
           background: transparent !important;
@@ -1319,9 +894,21 @@ export default function UserManagementPage() {
           padding: 14px 16px !important;
           border-bottom: 1px solid #f1f5f9 !important;
         }
+        .dark .custom-table .ant-table-thead > tr > th {
+          background: #1e293b !important;
+          color: #f8fafc !important;
+          border-bottom: 1px solid #334155 !important;
+        }
         .custom-table .ant-table-tbody > tr > td {
           border-bottom: 1px solid #f1f5f9 !important;
           padding: 14px 16px !important;
+        }
+        .dark .custom-table .ant-table-tbody > tr > td {
+          border-bottom: 1px solid #1e293b !important;
+          color: #cbd5e1 !important;
+        }
+        .dark .custom-table .ant-table-tbody > tr:hover > td {
+          background-color: #1e293b !important;
         }
         .custom-table .ant-table-tbody > tr:last-child > td {
           border-bottom: none !important;

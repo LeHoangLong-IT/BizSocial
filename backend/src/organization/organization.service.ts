@@ -430,6 +430,17 @@ export class OrganizationService {
       },
     });
 
+    // Bắn thông báo tự động đến User được điều chuyển
+    await prisma.notification.create({
+      data: {
+        userId: dto.userId,
+        title: 'Quyết định điều chuyển công tác',
+        desc: `Bạn vừa được điều chuyển sang ${targetDeptName || updatedUser.department?.name || 'Phòng ban mới'}${targetTeamName ? ` (${targetTeamName})` : ''}.${dto.reason ? ` Lý do: ${dto.reason}` : ''}`,
+        type: 'system',
+        read: false,
+      },
+    });
+
     return updatedUser;
   }
 

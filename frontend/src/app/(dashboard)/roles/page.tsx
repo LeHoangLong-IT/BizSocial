@@ -23,6 +23,10 @@ import {
   List,
   Modal,
   Alert,
+  Select,
+  Form,
+  Popconfirm,
+  Popover,
 } from 'antd';
 import {
   SafetyCertificateOutlined,
@@ -43,20 +47,37 @@ import {
   LockOutlined,
   InfoCircleOutlined,
   ArrowRightOutlined,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  HistoryOutlined,
+  GlobalOutlined,
+  UsergroupAddOutlined,
+  AuditOutlined,
+  UndoOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
+import { ResourceShareModal } from '@/components/common/ResourceShareModal';
 
 const { Title, Text, Paragraph } = Typography;
 
+// Định nghĩa 4 cấp độ Scope
+const SCOPE_OPTIONS = [
+  { value: 'PERSONAL', label: 'Cá nhân', color: 'blue' },
+  { value: 'TEAM', label: 'Team', color: 'purple' },
+  { value: 'DEPARTMENT', label: 'Phòng ban', color: 'amber' },
+  { value: 'GLOBAL', label: 'Toàn công ty', color: 'emerald' },
+];
+
 // Định nghĩa hành động chuẩn
 const ACTIONS = [
-  { key: 'CREATE', label: 'Thêm', short: 'C', color: 'emerald', bg: 'bg-emerald-50 text-emerald-700 border-emerald-300' },
-  { key: 'READ', label: 'Xem', short: 'R', color: 'blue', bg: 'bg-blue-50 text-blue-700 border-blue-300' },
-  { key: 'UPDATE', label: 'Sửa', short: 'U', color: 'amber', bg: 'bg-amber-50 text-amber-700 border-amber-300' },
-  { key: 'DELETE', label: 'Xóa', short: 'D', color: 'rose', bg: 'bg-rose-50 text-rose-700 border-rose-300' },
-  { key: 'APPROVE', label: 'Duyệt', short: 'A', color: 'purple', bg: 'bg-purple-50 text-purple-700 border-purple-300' },
+  { key: 'CREATE', label: 'Thêm', short: 'C', color: 'emerald', bg: 'dark-badge-emerald' },
+  { key: 'READ', label: 'Xem', short: 'R', color: 'blue', bg: 'dark-badge-blue' },
+  { key: 'UPDATE', label: 'Sửa', short: 'U', color: 'amber', bg: 'dark-badge-amber' },
+  { key: 'DELETE', label: 'Xóa', short: 'D', color: 'rose', bg: 'dark-badge-rose' },
+  { key: 'APPROVE', label: 'Duyệt', short: 'A', color: 'purple', bg: 'dark-badge-purple' },
 ];
 
 // Mapping icon cho từng module
@@ -105,12 +126,19 @@ const MODULE_CONFIG: Record<string, { title: string; desc: string; icon: React.R
   },
 };
 
-// Mô tả chi tiết 5 Roles
-const ROLE_DETAILS: Record<string, { icon: React.ReactNode; level: string; color: string; responsibilities: string[] }> = {
+const DEFAULT_ROLE_DESCRIPTIONS: Record<string, string> = {
+  Manager: 'Giám đốc/Quản lý toàn bộ các phân hệ, xem Dashboard ROI, phê duyệt chiến dịch truyền thông và giám sát các phòng ban.',
+  Leader: 'Trưởng nhóm lập kế hoạch Lịch nội dung (Content Calendar), phân công nhiệm vụ, duyệt bài đăng MXH và chấm điểm thực tập sinh.',
+  Employee: 'Nhân viên chính thức tạo bản nháp bài đăng, trực tin nhắn/bình luận đa kênh (Unified Inbox) và tạo Lead/Ticket ERP.',
+  Intern: 'Thực tập sinh thực hành độc quyền trong Sandbox, viết bài tập Mock Post nộp cho Leader chấm điểm.',
+};
+
+// Mô tả chi tiết 5 Roles gốc
+const ROLE_DETAILS: Record<string, { icon: React.ReactNode; level: string; badgeClass: string; responsibilities: string[] }> = {
   'Super Admin': {
     icon: <CrownOutlined className="text-amber-500 text-xl" />,
-    level: 'Cấp 1 - Tối cao',
-    color: 'gold',
+    level: 'Quản Trị Viên',
+    badgeClass: 'dark-badge-amber',
     responsibilities: [
       'Toàn quyền kiểm soát hệ sinh thái BizSocial ERP',
       'Cấu hình kết nối API MXH (Facebook, Zalo OA, LinkedIn)',
@@ -121,7 +149,7 @@ const ROLE_DETAILS: Record<string, { icon: React.ReactNode; level: string; color
   Manager: {
     icon: <SolutionOutlined className="text-blue-500 text-xl" />,
     level: 'Cấp 1 - Giám đốc',
-    color: 'blue',
+    badgeClass: 'dark-badge-sky',
     responsibilities: [
       'Mặc định toàn quyền truy cập tất cả các module',
       'Xem Dashboard tổng quan ROI, ngân sách và chỉ số hiệu suất',
@@ -132,7 +160,7 @@ const ROLE_DETAILS: Record<string, { icon: React.ReactNode; level: string; color
   Leader: {
     icon: <TeamOutlined className="text-emerald-500 text-xl" />,
     level: 'Cấp 2 - Trưởng nhóm',
-    color: 'green',
+    badgeClass: 'dark-badge-emerald',
     responsibilities: [
       'Lên kế hoạch Lịch nội dung (Content Calendar) hàng tuần/tháng',
       'Phân công nhiệm vụ soạn bài cho Nhân viên và Intern',
@@ -143,7 +171,7 @@ const ROLE_DETAILS: Record<string, { icon: React.ReactNode; level: string; color
   Employee: {
     icon: <UserSwitchOutlined className="text-indigo-500 text-xl" />,
     level: 'Cấp 3 - Nhân viên Chính thức',
-    color: 'indigo',
+    badgeClass: 'dark-badge-indigo',
     responsibilities: [
       'Tạo bản nháp (Drafts) bài viết, hình ảnh, video',
       'Trực tiếp tương tác thật với khách hàng (Unified Inbox)',
@@ -154,7 +182,7 @@ const ROLE_DETAILS: Record<string, { icon: React.ReactNode; level: string; color
   Intern: {
     icon: <UserOutlined className="text-amber-600 text-xl" />,
     level: 'Cấp 4 - Thực tập sinh',
-    color: 'orange',
+    badgeClass: 'dark-badge-orange',
     responsibilities: [
       'Hoạt động độc quyền trong Sandbox (Module Đào tạo)',
       'Viết bài tập Mock Post nộp cho Leader chấm điểm',
@@ -169,6 +197,7 @@ interface RoleItem {
   name: string;
   description: string | null;
   usersCount: number;
+  isProtected?: boolean;
 }
 
 interface ModuleItem {
@@ -182,6 +211,7 @@ interface PermissionItem {
   roleId: number;
   moduleId: number;
   action: string;
+  scope?: string;
 }
 
 export default function RolesMatrixPage() {
@@ -195,14 +225,20 @@ export default function RolesMatrixPage() {
 
   const [roles, setRoles] = useState<RoleItem[]>([]);
   const [modules, setModules] = useState<ModuleItem[]>([]);
-  // Lưu danh sách permission dưới dạng Set key: "roleId-moduleId-action"
   const [permissionSet, setPermissionSet] = useState<Set<string>>(new Set());
   const [originalPermissionSet, setOriginalPermissionSet] = useState<Set<string>>(new Set());
+
+  // Default Scope Configurator State: map roleId -> scope
+  const [roleScopes, setRoleScopes] = useState<Record<number, string>>({});
+  const [originalRoleScopes, setOriginalRoleScopes] = useState<Record<number, string>>({});
 
   // Drawer xem chi tiết vai trò
   const [drawerVisible, setDrawerVisible] = useState<boolean>(false);
   const [selectedRoleDetail, setSelectedRoleDetail] = useState<any>(null);
   const [loadingDetail, setLoadingDetail] = useState<boolean>(false);
+
+  // Modal DAC Engine
+  const [shareModalOpen, setShareModalOpen] = useState<boolean>(false);
 
   const groupedPermissionsDetail = useMemo(() => {
     if (!selectedRoleDetail?.permissions) return {};
@@ -215,7 +251,17 @@ export default function RolesMatrixPage() {
     return map;
   }, [selectedRoleDetail]);
 
-  // Lấy token đăng nhập
+  // Modal Tạo / Sửa Custom Role
+  const [roleModalOpen, setRoleModalOpen] = useState<boolean>(false);
+  const [editingRole, setEditingRole] = useState<RoleItem | null>(null);
+  const [roleForm] = Form.useForm();
+  const [savingRole, setSavingRole] = useState<boolean>(false);
+
+  // Audit Logs State
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [fetchingAuditLogs, setFetchingAuditLogs] = useState<boolean>(false);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
+
   const getAuthHeader = () => {
     let currentToken = token;
     if (!currentToken && typeof window !== 'undefined') {
@@ -228,6 +274,19 @@ export default function RolesMatrixPage() {
     };
   };
 
+  // Tải danh sách Audit Logs
+  const fetchAuditLogs = async () => {
+    setFetchingAuditLogs(true);
+    try {
+      const res = await axios.get('http://localhost:3001/audit-log', getAuthHeader());
+      setAuditLogs(res.data || []);
+    } catch (err) {
+      console.error('Lỗi tải audit log:', err);
+    } finally {
+      setFetchingAuditLogs(false);
+    }
+  };
+
   // Tải dữ liệu ma trận từ Backend
   const fetchMatrixData = async () => {
     let currentToken = token;
@@ -238,19 +297,29 @@ export default function RolesMatrixPage() {
 
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:3001/roles/matrix', {
-        headers: {
-          Authorization: `Bearer ${currentToken}`,
-        },
-      });
+      const res = await axios.get('http://localhost:3001/roles/matrix', getAuthHeader());
       const { roles: fetchedRoles, modules: fetchedModules, permissions: fetchedPermissions } = res.data;
 
       setRoles(fetchedRoles);
       setModules(fetchedModules);
 
       const pSet = new Set<string>();
+      const scopesMap: Record<number, string> = {};
+
       fetchedPermissions.forEach((p: PermissionItem) => {
         pSet.add(`${p.roleId}-${p.moduleId}-${p.action}`);
+        if (p.roleId && p.scope) {
+          scopesMap[p.roleId] = p.scope;
+        }
+      });
+
+      // Mặc định gán Scope chuẩn cho các Role nếu chưa có
+      fetchedRoles.forEach((r: RoleItem) => {
+        if (!scopesMap[r.id]) {
+          if (r.name === 'Super Admin' || r.name === 'Manager') scopesMap[r.id] = 'GLOBAL';
+          else if (r.name === 'Leader') scopesMap[r.id] = 'TEAM';
+          else scopesMap[r.id] = 'PERSONAL';
+        }
       });
 
       // Super Admin luôn có tất cả quyền
@@ -265,6 +334,8 @@ export default function RolesMatrixPage() {
 
       setPermissionSet(pSet);
       setOriginalPermissionSet(new Set(pSet));
+      setRoleScopes(scopesMap);
+      setOriginalRoleScopes({ ...scopesMap });
     } catch (err: any) {
       message.error(err.response?.data?.message || 'Không thể tải ma trận phân quyền');
     } finally {
@@ -276,14 +347,23 @@ export default function RolesMatrixPage() {
     fetchMatrixData();
   }, [token]);
 
+  useEffect(() => {
+    if (activeTab === 'audit') {
+      fetchAuditLogs();
+    }
+  }, [activeTab]);
+
   // Kiểm tra có thay đổi chưa lưu hay không
   const hasChanges = useMemo(() => {
     if (permissionSet.size !== originalPermissionSet.size) return true;
     for (const key of permissionSet) {
       if (!originalPermissionSet.has(key)) return true;
     }
+    for (const roleId in roleScopes) {
+      if (roleScopes[roleId] !== originalRoleScopes[roleId]) return true;
+    }
     return false;
-  }, [permissionSet, originalPermissionSet]);
+  }, [permissionSet, originalPermissionSet, roleScopes, originalRoleScopes]);
 
   // Bật/tắt 1 quyền trong State
   const handleTogglePermission = (roleId: number, roleName: string, moduleId: number, action: string) => {
@@ -308,7 +388,6 @@ export default function RolesMatrixPage() {
   const handleToggleAllRolePermissions = (roleId: number, roleName: string) => {
     if (roleName === 'Super Admin') return;
 
-    // Kiểm tra xem hiện tại role này đã có full quyền chưa
     let totalPossible = modules.length * ACTIONS.length;
     let currentCount = 0;
     modules.forEach((m) => {
@@ -343,19 +422,20 @@ export default function RolesMatrixPage() {
     );
   };
 
-  // Lưu toàn bộ Ma trận lên Backend
+  // Lưu toàn bộ Ma trận & Scope lên Backend
   const handleSaveMatrix = async () => {
     setSaving(true);
     try {
-      // Gửi batch update cho từng Role (trừ Super Admin)
       const rolesToUpdate = roles.filter((r) => r.name !== 'Super Admin');
 
       for (const role of rolesToUpdate) {
-        const rolePermissions: { moduleId: number; action: string }[] = [];
+        const roleScope = roleScopes[role.id] || 'PERSONAL';
+        const rolePermissions: { moduleId: number; action: string; scope: string }[] = [];
+
         modules.forEach((m) => {
           ACTIONS.forEach((a) => {
             if (permissionSet.has(`${role.id}-${m.id}-${a.key}`)) {
-              rolePermissions.push({ moduleId: m.id, action: a.key });
+              rolePermissions.push({ moduleId: m.id, action: a.key, scope: roleScope });
             }
           });
         });
@@ -371,7 +451,8 @@ export default function RolesMatrixPage() {
       }
 
       setOriginalPermissionSet(new Set(permissionSet));
-      message.success('Đã lưu thành công Ma trận Phân quyền mới!');
+      setOriginalRoleScopes({ ...roleScopes });
+      message.success('Đã lưu thành công Ma trận Phân quyền & Scope mới!');
     } catch (err: any) {
       message.error(err.response?.data?.message || 'Có lỗi khi lưu ma trận');
     } finally {
@@ -382,20 +463,48 @@ export default function RolesMatrixPage() {
   // Đặt lại các thay đổi chưa lưu
   const handleResetChanges = () => {
     setPermissionSet(new Set(originalPermissionSet));
+    setRoleScopes({ ...originalRoleScopes });
     message.info('Đã hoàn tác các thay đổi chưa lưu');
   };
 
-  // Mở Drawer xem chi tiết 1 Role
-  const handleViewRoleDetail = async (roleId: number) => {
-    setLoadingDetail(true);
-    setDrawerVisible(true);
+  // Xử lý tạo mới / chỉnh sửa Custom Role
+  const handleOpenRoleModal = (role?: RoleItem) => {
+    if (role) {
+      setEditingRole(role);
+      roleForm.setFieldsValue({ name: role.name, description: role.description });
+    } else {
+      setEditingRole(null);
+      roleForm.resetFields();
+    }
+    setRoleModalOpen(true);
+  };
+
+  const handleSaveRole = async (values: any) => {
+    setSavingRole(true);
     try {
-      const res = await axios.get(`http://localhost:3001/roles/${roleId}`, getAuthHeader());
-      setSelectedRoleDetail(res.data);
+      if (editingRole) {
+        await axios.patch(`http://localhost:3001/roles/${editingRole.id}`, values, getAuthHeader());
+        message.success('Cập nhật vai trò thành công!');
+      } else {
+        await axios.post('http://localhost:3001/roles', values, getAuthHeader());
+        message.success('Tạo vai trò tùy chỉnh mới thành công!');
+      }
+      setRoleModalOpen(false);
+      fetchMatrixData();
     } catch (err: any) {
-      message.error('Không thể tải chi tiết vai trò');
+      message.error(err.response?.data?.message || 'Không thể lưu vai trò!');
     } finally {
-      setLoadingDetail(false);
+      setSavingRole(false);
+    }
+  };
+
+  const handleDeleteRole = async (id: number) => {
+    try {
+      await axios.delete(`http://localhost:3001/roles/${id}`, getAuthHeader());
+      message.success('Đã xóa vai trò thành công!');
+      fetchMatrixData();
+    } catch (err: any) {
+      message.error(err.response?.data?.message || 'Không thể xóa vai trò!');
     }
   };
 
@@ -411,9 +520,8 @@ export default function RolesMatrixPage() {
     );
   }, [modules, searchText]);
 
-  // Tạm ẩn Super Admin khỏi ma trận phân quyền
   const visibleRoles = useMemo(
-    () => roles.filter((r) => r.name !== 'Super Admin'),
+    () => roles.filter((r) => r.name !== 'Super Admin' && r.name !== 'SUPER_ADMIN'),
     [roles]
   );
 
@@ -422,10 +530,10 @@ export default function RolesMatrixPage() {
     {
       title: (
         <div className="py-0.5 pl-4">
-          <span className="font-bold text-slate-800 uppercase tracking-wide text-xs">
+          <span className="font-bold text-slate-800 dark:!text-slate-100 uppercase tracking-wide text-xs">
             Phân hệ / Module Nghiệp Vụ
           </span>
-          <p className="text-[10px] text-slate-400 m-0 font-normal">
+          <p className="text-[10px] text-slate-400 dark:!text-slate-400 m-0 font-normal">
             7 Modules cốt lõi của BizSocial ERP
           </p>
         </div>
@@ -443,14 +551,14 @@ export default function RolesMatrixPage() {
         return (
           <div className="py-1 pl-4">
             <div className="flex items-center gap-2">
-              <span className="text-base text-blue-600">{conf.icon}</span>
-              <span className="font-semibold text-slate-900 text-xs">{conf.title}</span>
+              <span className="text-base text-blue-600 dark:text-blue-400">{conf.icon}</span>
+              <span className="font-semibold text-slate-900 dark:!text-white text-xs">{conf.title}</span>
             </div>
-            <p className="text-[11px] text-slate-500 m-0 mt-1 leading-relaxed pl-6">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-1 leading-relaxed pl-6">
               {conf.desc}
             </p>
             <div className="pl-6 mt-1.5">
-              <Tag className="text-[9px] font-mono leading-tight py-0.5 px-1.5 bg-slate-100 border-slate-200 text-slate-500 rounded" color="default">
+              <Tag className="text-[9px] font-mono leading-tight py-0.5 px-1.5 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded" color="default">
                 Module: {moduleName}
               </Tag>
             </div>
@@ -462,12 +570,11 @@ export default function RolesMatrixPage() {
       const isSuperAdmin = role.name === 'Super Admin';
       const roleDetail = ROLE_DETAILS[role.name] || {
         icon: <UserOutlined />,
-        level: 'Vai trò',
-        color: 'blue',
+        level: 'Vai trò tùy chỉnh',
+        badgeClass: 'bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/80',
         responsibilities: [],
       };
 
-      // Đếm số quyền role này đang có
       let currentPermCount = 0;
       modules.forEach((m) => {
         ACTIONS.forEach((a) => {
@@ -481,26 +588,37 @@ export default function RolesMatrixPage() {
 
       return {
         title: (
-          <div className="text-center py-1 px-0.5">
+          <div className="text-center py-1 px-0.5 space-y-1">
             <div className="flex items-center justify-center gap-1">
               <span>{roleDetail.icon}</span>
-              <span className="font-bold text-slate-900 text-xs">{role.name}</span>
+              <span className="font-bold text-slate-900 dark:!text-white text-xs">{role.name}</span>
             </div>
-            <div className="mt-0.5">
-              <Tag color={roleDetail.color} className="text-[9px] font-medium border-0 m-0 px-1.5 py-0">
-                {roleDetail.level}
-              </Tag>
-            </div>
+
+            {/* Scope Configurator Dropdown */}
+            {!isSuperAdmin && (
+              <div className="pt-0.5">
+                <Tooltip title="Thiết lập Phạm vi Dữ liệu mặc định (Default Scope Configurator)">
+                  <Select
+                    size="small"
+                    value={roleScopes[role.id] || 'PERSONAL'}
+                    onChange={(val) => setRoleScopes((prev) => ({ ...prev, [role.id]: val }))}
+                    className="w-full text-xs font-bold"
+                    options={SCOPE_OPTIONS}
+                  />
+                </Tooltip>
+              </div>
+            )}
+
             <div className="text-[10px] text-slate-400 mt-0.5">
               {role.usersCount} nhân sự • {permPercent}% quyền
             </div>
 
             {!isSuperAdmin && (
-              <div className="mt-1">
+              <div>
                 <Button
                   size="small"
                   type="link"
-                  className="text-[10px] h-5 px-1 text-blue-600 hover:text-blue-800"
+                  className="text-[10px] h-5 px-1 text-blue-600 dark:text-indigo-400 hover:text-blue-800 dark:hover:text-indigo-300"
                   onClick={() => handleToggleAllRolePermissions(role.id, role.name)}
                 >
                   Chọn tất cả
@@ -528,7 +646,7 @@ export default function RolesMatrixPage() {
                       onClick={() => handleTogglePermission(role.id, role.name, moduleRecord.id, act.key)}
                       className={`w-6 h-6 rounded font-bold text-[10px] flex items-center justify-center transition-all cursor-pointer border ${hasPermission
                         ? `${act.bg} shadow-xs font-semibold scale-105`
-                        : 'bg-slate-50 text-slate-300 border-slate-200 hover:border-slate-300 hover:text-slate-400'
+                        : 'bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-400 dark:hover:text-slate-400'
                         } ${isSuperAdmin ? 'cursor-not-allowed opacity-90' : ''}`}
                     >
                       {act.short}
@@ -545,40 +663,46 @@ export default function RolesMatrixPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header Actions - Same row on mobile & desktop */}
-      <div className="flex flex-row justify-between items-center gap-2 mb-1 print:hidden">
-        <Title level={3} className="!mb-0 font-bold text-slate-800 tracking-tight text-lg sm:text-2xl truncate">
-          Quản lý Phân quyền
-        </Title>
+      {/* Header Layout: Title & Actions Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 print:hidden">
+        <div>
+          <Title level={3} className="!mb-0 font-extrabold text-slate-900 dark:text-white tracking-tight text-xl sm:text-2xl whitespace-nowrap">
+            Quản lý Phân quyền
+          </Title>
+        </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          {hasChanges && (
-            <Button
-              onClick={handleResetChanges}
-              className="text-slate-700 font-medium text-xs h-8 px-2.5 shadow-none border-slate-200 hover:text-blue-600 rounded-lg"
-            >
-              Hoàn tác
-            </Button>
-          )}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 [scrollbar-width:none]">
           <Button
             type="primary"
-            icon={<SaveOutlined />}
-            loading={saving}
-            disabled={!hasChanges}
-            onClick={handleSaveMatrix}
-            className="bg-slate-900 hover:bg-slate-800 border-0 font-medium text-xs h-8 px-2.5 sm:px-3 rounded-lg shadow-xs flex items-center justify-center gap-1"
+            icon={<PlusOutlined />}
+            onClick={() => handleOpenRoleModal()}
+            className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 text-white font-bold text-xs h-9 px-3 sm:px-3.5 rounded-xl flex items-center justify-center gap-1.5 shadow-sm shrink-0 border-0"
           >
-            <span className="hidden sm:inline">Lưu ma trận</span>
+            <span>Tạo mới</span>
           </Button>
+
           <Button
-            icon={<ReloadOutlined />}
-            onClick={fetchMatrixData}
-            className="text-slate-600 font-medium h-8 w-8 p-0 flex items-center justify-center shadow-none border-slate-200 hover:text-blue-600 rounded-lg"
-          />
+            icon={<SafetyCertificateOutlined />}
+            onClick={() => setShareModalOpen(true)}
+            className="bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/80 font-bold text-xs h-9 px-3 sm:px-3.5 rounded-xl flex items-center justify-center gap-1.5 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 shrink-0"
+          >
+            <span>Ủy quyền động</span>
+          </Button>
+
+          <Button
+            icon={<HistoryOutlined />}
+            onClick={() => {
+              setIsAuditModalOpen(true);
+              fetchAuditLogs();
+            }}
+            className="bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/80 font-bold text-xs h-9 px-3 sm:px-3.5 rounded-xl flex items-center justify-center gap-1.5 hover:bg-amber-100 dark:hover:bg-amber-900/50 shrink-0"
+          >
+            <span className="hidden sm:inline">Lịch sử phân quyền</span>
+          </Button>
         </div>
       </div>
 
-      {/* Tabs Chuyển Đổi */}
+      {/* Tabs Chuyển Đổi (Matrix, Roles, Audit Log) */}
       <Tabs
         activeKey={activeTab}
         onChange={setActiveTab}
@@ -590,7 +714,7 @@ export default function RolesMatrixPage() {
             label: (
               <span className="flex items-center gap-1.5 font-medium px-1 text-xs sm:text-sm">
                 <SafetyCertificateOutlined />
-                Ma trận Phân quyền
+                Phân quyền
               </span>
             ),
           },
@@ -600,7 +724,7 @@ export default function RolesMatrixPage() {
               <span className="flex items-center gap-1.5 font-medium px-1 text-xs sm:text-sm">
                 <TeamOutlined />
                 Tổng quan Vai trò
-                <Badge count={visibleRoles.length} className="ml-1" style={{ backgroundColor: '#3b82f6' }} />
+                <Badge count={visibleRoles.length} className="ml-1" style={{ backgroundColor: '#7367f0' }} />
               </span>
             ),
           },
@@ -608,41 +732,59 @@ export default function RolesMatrixPage() {
       />
 
       {loading ? (
-        <Card className="rounded-2xl shadow-xs border border-slate-100 p-12 text-center">
+        <Card className="rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center">
           <Spin size="large" description="Đang tải dữ liệu ma trận phân quyền..." />
         </Card>
       ) : activeTab === 'matrix' ? (
         /* TAB 1: MA TRẬN PHÂN QUYỀN */
-        <Card className="rounded-2xl shadow-xs border border-slate-100 overflow-hidden" styles={{ body: { padding: 0 } }}>
+        <Card className="rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden" styles={{ body: { padding: 0 } }}>
           {/* Thanh công cụ ma trận */}
-          <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-stretch md:items-center bg-white gap-3">
-            {/* Chú thích màu sắc 5 hành động (Nằm trên 1 hàng không xuống dòng) */}
-            <div className="flex items-center gap-2 text-xs bg-slate-50/80 p-2 rounded-xl border border-slate-100 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full sm:w-auto">
+          <div className="p-3 sm:p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-stretch md:items-center bg-white dark:bg-slate-900 gap-3">
+            <div className="flex items-center gap-2 text-xs bg-slate-50/80 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-100 dark:border-slate-700/80 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full sm:w-auto">
               {ACTIONS.map((a) => (
                 <div key={a.key} className="flex items-center gap-1 shrink-0">
                   <span className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] border ${a.bg}`}>
                     {a.short}
                   </span>
-                  <span className="text-slate-600 font-medium text-[11px]">
+                  <span className="text-slate-600 dark:text-slate-300 font-medium text-[11px]">
                     {a.label}
                   </span>
                 </div>
               ))}
             </div>
 
-            {/* Ô tìm kiếm module */}
-            <div className="w-full sm:w-72">
+            <div className="flex items-center gap-2 w-full md:w-auto">
               <Input
                 placeholder="Tìm kiếm phân hệ / module..."
                 prefix={<SearchOutlined className="text-slate-400" />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 allowClear
-                className="rounded-xl h-9 text-xs"
+                className="rounded-xl h-9 text-xs flex-1 md:w-60"
               />
+
+              {hasChanges && (
+                <Button
+                  icon={<UndoOutlined />}
+                  onClick={handleResetChanges}
+                  className="text-slate-700 dark:text-slate-200 font-medium text-xs h-9 px-2.5 sm:px-3 shadow-none border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:text-blue-600 rounded-xl shrink-0 flex items-center gap-1"
+                >
+                  <span className="hidden sm:inline">Hoàn tác</span>
+                </Button>
+              )}
+
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                loading={saving}
+                disabled={!hasChanges}
+                onClick={handleSaveMatrix}
+                className="bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 border-0 font-bold text-xs h-9 px-2.5 sm:px-3.5 rounded-xl shadow-xs flex items-center justify-center gap-1.5 shrink-0"
+              >
+                <span className="hidden sm:inline">Lưu ma trận</span>
+              </Button>
             </div>
           </div>
-
           {/* Desktop Table View */}
           <div className="hidden sm:block overflow-x-auto w-full">
             <Table
@@ -655,8 +797,8 @@ export default function RolesMatrixPage() {
             />
           </div>
 
-          {/* Mobile Responsive View: Module Cards (Không dùng Table bị gạt lùi) */}
-          <div className="block sm:hidden p-3 space-y-3 bg-slate-50/40">
+          {/* Mobile View: Module Cards */}
+          <div className="block sm:hidden p-3 space-y-3 bg-slate-50/50 dark:bg-slate-950/50">
             {filteredModules.map((moduleItem) => {
               const conf = MODULE_CONFIG[moduleItem.name] || {
                 title: moduleItem.name,
@@ -668,45 +810,61 @@ export default function RolesMatrixPage() {
               return (
                 <div
                   key={moduleItem.id}
-                  className="bg-white rounded-xl border border-slate-200/80 p-3 shadow-xs"
+                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-3.5 shadow-xs space-y-3"
                 >
-                  {/* Module Title & Icon */}
-                  <div className="flex items-center gap-2 pb-2.5 border-b border-slate-100 mb-2.5">
-                    <span className="text-base shrink-0">{conf.icon}</span>
-                    <div className="min-w-0">
-                      <h4 className="font-bold text-slate-800 text-xs m-0 leading-tight truncate">
+                  {/* Module Header */}
+                  <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <div className="w-7 h-7 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm shrink-0">
+                      {conf.icon}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-extrabold text-slate-900 dark:text-white text-xs m-0 leading-tight truncate">
                         {conf.title}
                       </h4>
-                      <p className="text-[10px] text-slate-400 m-0 mt-0.5 truncate">
-                        {conf.desc}
-                      </p>
+                      <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
+                        Module: {moduleItem.name}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Module Roles Permission Toggles */}
-                  <div className="space-y-2">
+                  {/* List Roles Permissions for this Module */}
+                  <div className="space-y-2.5">
                     {visibleRoles.map((role) => {
                       const isSuperAdmin = role.name === 'Super Admin';
                       const roleDetail = ROLE_DETAILS[role.name] || {
                         icon: <UserOutlined />,
-                        color: 'blue',
+                        color: 'purple',
                       };
 
                       return (
                         <div
                           key={role.id}
-                          className="flex items-center justify-between bg-slate-50/70 p-2 rounded-lg border border-slate-100"
+                          className="bg-slate-50/80 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/80 space-y-2"
                         >
-                          {/* Role Name */}
-                          <div className="flex items-center gap-1.5 min-w-0 pr-1">
-                            <span className="text-xs shrink-0">{roleDetail.icon}</span>
-                            <span className="font-semibold text-[11px] text-slate-800 truncate">
-                              {role.name}
-                            </span>
+                          {/* Role Header & Scope */}
+                          <div className="flex items-center justify-between gap-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="text-xs shrink-0">{roleDetail.icon}</span>
+                              <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100 truncate">
+                                {role.name}
+                              </span>
+                            </div>
+
+                            {!isSuperAdmin && (
+                              <div className="w-36 shrink-0">
+                                <Select
+                                  size="small"
+                                  value={roleScopes[role.id] || 'PERSONAL'}
+                                  onChange={(val) => setRoleScopes((prev) => ({ ...prev, [role.id]: val }))}
+                                  className="w-full text-xs font-bold"
+                                  options={SCOPE_OPTIONS}
+                                />
+                              </div>
+                            )}
                           </div>
 
-                          {/* 5 Action Toggle Buttons */}
-                          <div className="flex items-center gap-1 shrink-0">
+                          {/* 5 Actions Toggle */}
+                          <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
                             {ACTIONS.map((act) => {
                               const hasPermission = permissionSet.has(
                                 `${role.id}-${moduleItem.id}-${act.key}`
@@ -724,12 +882,10 @@ export default function RolesMatrixPage() {
                                       act.key
                                     )
                                   }
-                                  className={`w-6 h-6 rounded font-bold text-[10px] flex items-center justify-center transition-all cursor-pointer border ${
-                                    hasPermission
-                                      ? `${act.bg} shadow-xs font-semibold scale-105`
-                                      : 'bg-white text-slate-300 border-slate-200 hover:border-slate-300'
-                                  }`}
-                                  title={`${act.label} (${act.key})`}
+                                  className={`flex-1 py-1 rounded-lg font-bold text-[10px] flex items-center justify-center transition-all cursor-pointer border ${hasPermission
+                                    ? `${act.bg} shadow-xs scale-105`
+                                    : 'bg-white dark:bg-slate-800 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                    }`}
                                 >
                                   {act.short}
                                 </button>
@@ -744,118 +900,72 @@ export default function RolesMatrixPage() {
               );
             })}
           </div>
-
-          {/* Footer ghi chú */}
-          <div className="p-3 sm:p-4 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 flex justify-between items-center flex-wrap gap-2">
-            <div className="text-slate-400 font-medium text-[11px]">
-              Tổng số phân hệ: {modules.length} modules • 5 quyền hành động
-            </div>
-          </div>
         </Card>
-      ) : (
-        /* TAB 2: TỔNG QUAN VAI TRÒ (ROLE CARDS) */
+      ) : activeTab === 'roles' ? (
+        /* TAB 2: TỔNG QUAN VAI TRÒ */
         <div className="space-y-5">
           <Row gutter={[20, 20]}>
             {visibleRoles.map((role) => {
+              const isProtected = role.isProtected;
               const roleDetail = ROLE_DETAILS[role.name] || {
-                icon: <UserOutlined />,
-                level: 'Cấp bậc',
-                color: 'blue',
-                responsibilities: [],
+                icon: <UserOutlined className="text-purple-500 text-xl" />,
+                level: 'Vai trò tùy chỉnh',
+                badgeClass: 'bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/80',
+                responsibilities: ['Vai trò tùy chỉnh được tạo bởi Quản trị viên'],
               };
-
-              // Đếm số quyền của role
-              let rolePermCount = 0;
-              modules.forEach((m) => {
-                ACTIONS.forEach((a) => {
-                  if (permissionSet.has(`${role.id}-${m.id}-${a.key}`)) {
-                    rolePermCount++;
-                  }
-                });
-              });
-              const maxPermCount = modules.length * ACTIONS.length;
-              const permPercent = Math.round((rolePermCount / (maxPermCount || 1)) * 100);
 
               return (
                 <Col xs={24} md={12} xl={8} key={role.id}>
                   <Card
-                    className="rounded-2xl shadow-xs border border-slate-100 hover:shadow-md transition-all h-full card-animate flex flex-col justify-between"
+                    className="rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-md transition-all h-full flex flex-col justify-between"
                     styles={{ body: { padding: '24px' } }}
                   >
                     <div>
-                      {/* Header thẻ vai trò */}
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
                             {roleDetail.icon}
                           </div>
                           <div>
-                            <h3 className="text-lg font-bold text-slate-900 m-0">
+                            <h3 className="font-extrabold text-base text-slate-900 dark:text-white m-0 leading-tight">
                               {role.name}
                             </h3>
-                            <Tag color={roleDetail.color} className="text-[10px] font-medium border-0 mt-0.5">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md inline-block mt-1 ${roleDetail.badgeClass}`}>
                               {roleDetail.level}
-                            </Tag>
+                            </span>
                           </div>
                         </div>
 
-                        <Badge
-                          count={`${role.usersCount} users`}
-                          style={{ backgroundColor: '#f1f5f9', color: '#475569', fontWeight: 600, border: '1px solid #e2e8f0' }}
-                        />
+                        {!isProtected && (
+                          <Space size="small">
+                            <Button
+                              type="text"
+                              icon={<EditOutlined className="dark:text-slate-300" />}
+                              size="small"
+                              onClick={() => handleOpenRoleModal(role)}
+                            />
+                            <Popconfirm
+                              title="Xóa vai trò tùy chỉnh"
+                              description={`Bạn có chắc muốn xóa vai trò "${role.name}"?`}
+                              onConfirm={() => handleDeleteRole(role.id)}
+                              okText="Xóa"
+                              cancelText="Hủy"
+                              okButtonProps={{ danger: true }}
+                            >
+                              <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+                            </Popconfirm>
+                          </Space>
+                        )}
                       </div>
 
-                      {/* Tiến độ cấp quyền */}
-                      <div className="bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100">
-                        <div className="flex justify-between items-center text-xs mb-1.5">
-                          <span className="text-slate-500 font-medium">Độ phủ quyền hạn:</span>
-                          <span className="font-bold text-slate-800">
-                            {rolePermCount}/{maxPermCount} ({permPercent}%)
-                          </span>
-                        </div>
-                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${permPercent > 80 ? 'bg-indigo-600' : permPercent > 50 ? 'bg-blue-500' : 'bg-amber-500'
-                              }`}
-                            style={{ width: `${permPercent}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Danh sách nhiệm vụ chính */}
-                      <div>
-                        <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider block mb-2">
-                          Nhiệm vụ trọng tâm:
-                        </span>
-                        <ul className="space-y-1.5 pl-4 text-xs text-slate-600 m-0">
-                          {roleDetail.responsibilities.map((resp, idx) => (
-                            <li key={idx} className="leading-relaxed">
-                              {resp}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed font-medium">
+                        {role.description || DEFAULT_ROLE_DESCRIPTIONS[role.name] || 'Vai trò tùy chỉnh được khởi tạo bởi Quản trị viên.'}
+                      </p>
                     </div>
 
-                    {/* Nút hành động */}
-                    <div className="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center">
-                      <Button
-                        type="link"
-                        size="small"
-                        icon={<ArrowRightOutlined />}
-                        className="text-xs font-semibold text-blue-600 p-0 hover:text-blue-800"
-                        onClick={() => router.push(`/users`)}
-                      >
-                        Xem nhân sự ({role.usersCount})
-                      </Button>
-
-                      <Button
-                        size="small"
-                        className="rounded-lg text-xs font-medium"
-                        onClick={() => handleViewRoleDetail(role.id)}
-                      >
-                        Chi tiết quyền
-                      </Button>
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400 font-medium">
+                      <span>{role.usersCount} nhân sự đang gán</span>
+                      {isProtected && <span className="text-[9px] rounded font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Bảo vệ</span>}
                     </div>
                   </Card>
                 </Col>
@@ -863,7 +973,170 @@ export default function RolesMatrixPage() {
             })}
           </Row>
         </div>
-      )}
+      ) : null}
+
+      {/* Modal Lịch Sử Phân Quyền & Bảo Mật */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-sm sm:text-base pb-2.5 sm:pb-3 border-b border-slate-100 dark:border-slate-800">
+            <AuditOutlined className="text-amber-500 text-base sm:text-lg" />
+            <span className="truncate">Lịch Sử Thay Đổi Phân Quyền & Bảo Mật</span>
+          </div>
+        }
+        open={isAuditModalOpen}
+        onCancel={() => setIsAuditModalOpen(false)}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setIsAuditModalOpen(false)} className="rounded-xl font-bold bg-slate-900 dark:bg-indigo-600 border-0 h-9 px-5 w-full sm:w-auto">
+            Đóng
+          </Button>
+        ]}
+        width={850}
+        centered
+        className="custom-audit-modal"
+      >
+        <div className="py-1.5 sm:py-3 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <Button icon={<ReloadOutlined />} onClick={fetchAuditLogs} loading={fetchingAuditLogs} size="small" className="rounded-lg text-xs self-end sm:self-auto dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700">
+              Tải lại log
+            </Button>
+          </div>
+
+          {fetchingAuditLogs ? (
+            <div className="py-12 text-center"><Spin description="Đang tải dữ liệu nhật ký bảo mật..." /></div>
+          ) : (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden sm:block rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <Table
+                  dataSource={auditLogs}
+                  rowKey="id"
+                  pagination={{ pageSize: 8, showSizeChanger: false }}
+                  size="small"
+                  className="custom-matrix-table"
+                  columns={[
+                    {
+                      title: 'THỜI GIAN',
+                      dataIndex: 'createdAt',
+                      key: 'createdAt',
+                      width: '22%',
+                      render: (date) => (
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                          {new Date(date).toLocaleString('vi-VN')}
+                        </span>
+                      ),
+                    },
+                    {
+                      title: 'NGƯỜI THỰC HIỆN',
+                      dataIndex: 'userName',
+                      key: 'userName',
+                      width: '20%',
+                      render: (name) => <span className="font-bold text-xs text-slate-800 dark:text-slate-200">{name || 'Super Admin'}</span>,
+                    },
+                    {
+                      title: 'HÀNH ĐỘNG',
+                      dataIndex: 'action',
+                      key: 'action',
+                      width: '20%',
+                      render: (action) => {
+                        let badgeClass = 'bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/80';
+                        if (action.includes('CREATE')) badgeClass = 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80';
+                        if (action.includes('DELETE')) badgeClass = 'bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/80';
+                        if (action.includes('UPDATE') || action.includes('MATRIX')) badgeClass = 'bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/80';
+                        return <span className={`font-extrabold text-[10px] rounded-md px-2 py-0.5 border inline-block ${badgeClass}`}>{action}</span>;
+                      },
+                    },
+                    {
+                      title: 'CHI TIẾT THAO TÁC',
+                      dataIndex: 'details',
+                      key: 'details',
+                      render: (text) => <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">{text}</span>,
+                    },
+                  ]}
+                />
+              </div>
+
+              {/* Mobile Timeline Cards View */}
+              <div className="block sm:hidden space-y-2.5 max-h-[58vh] overflow-y-auto pr-0.5">
+                {auditLogs.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 text-xs">Chưa có nhật ký ghi nhận</div>
+                ) : (
+                  auditLogs.map((log: any, idx: number) => {
+                    let badgeClass = 'bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/80';
+                    if (log.action.includes('CREATE')) badgeClass = 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80';
+                    if (log.action.includes('DELETE')) badgeClass = 'bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/80';
+                    if (log.action.includes('UPDATE') || log.action.includes('MATRIX')) badgeClass = 'bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/80';
+
+                    return (
+                      <div
+                        key={log.id || idx}
+                        className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 space-y-2 text-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2 border-b border-slate-200/60 dark:border-slate-800/80 pb-2">
+                          <span className={`font-extrabold text-[10px] rounded-md px-2 py-0.5 border ${badgeClass}`}>
+                            {log.action}
+                          </span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                            {new Date(log.createdAt).toLocaleString('vi-VN')}
+                          </span>
+                        </div>
+
+                        <div className="text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
+                          {log.details}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                          <UserOutlined className="text-indigo-500 dark:text-indigo-400 text-xs" />
+                          <span>Thực hiện bởi:</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">
+                            {log.userName || 'Super Admin'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
+
+      {/* Modal Tạo / Sửa Vai Trò Tùy Chỉnh */}
+      <Modal
+        open={roleModalOpen}
+        onCancel={() => setRoleModalOpen(false)}
+        footer={null}
+        centered
+        forceRender
+        title={<span className="font-extrabold text-base text-slate-900 dark:text-white pb-2 block border-b border-slate-100 dark:border-slate-800">{editingRole ? 'Chỉnh Sửa Vai Trò' : 'Tạo Vai Trò Tùy Chỉnh Mới'}</span>}
+      >
+        <Form form={roleForm} layout="vertical" onFinish={handleSaveRole} className="space-y-4 pt-3">
+          <Form.Item
+            name="name"
+            label={<span className="text-xs font-bold text-slate-800 dark:text-slate-200">Tên Vai Trò Mới</span>}
+            rules={[{ required: true, message: 'Vui lòng nhập tên vai trò!' }]}
+          >
+            <Input size="large" className="rounded-xl" placeholder="Ví dụ: Chuyên Viên Kiểm Toán Content" />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label={<span className="text-xs font-bold text-slate-800 dark:text-slate-200">Mô Tả Nhiệm Vụ & Trách Nhiệm</span>}
+          >
+            <Input.TextArea rows={3} className="rounded-xl" placeholder="Mô tả ngắn trách nhiệm và nhiệm vụ của vai trò..." />
+          </Form.Item>
+
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={savingRole}
+            size="large"
+            className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-white h-11 border-0"
+          >
+            {editingRole ? 'Lưu Thay Đổi' : 'Xác Nhận Tạo Vai Trò'}
+          </Button>
+        </Form>
+      </Modal>
 
       {/* Drawer Chi Tiết Phân Quyền Vai Trò (UX/UI Premium) */}
       <Drawer
@@ -1011,37 +1284,15 @@ export default function RolesMatrixPage() {
         ) : null}
       </Drawer>
 
-      {/* Global CSS Style */}
-      <style jsx global>{`
-        .custom-matrix-tabs .ant-tabs-nav {
-          margin-bottom: 0 !important;
-        }
-        .custom-matrix-tabs .ant-tabs-tab {
-          border-radius: 12px 12px 0 0 !important;
-          border: 1px solid #e2e8f0 !important;
-          border-bottom: none !important;
-          background: #f8fafc !important;
-          transition: all 0.3s;
-        }
-        .custom-matrix-tabs .ant-tabs-tab-active {
-          background: #ffffff !important;
-          border-color: #cbd5e1 !important;
-        }
-        .custom-matrix-table .ant-table-thead > tr > th {
-          background: #f8fafc !important;
-          color: #0f172a !important;
-          padding: 10px 8px !important;
-          font-weight: 600 !important;
-          border-bottom: 1px solid #e2e8f0 !important;
-        }
-        .custom-matrix-table .ant-table-tbody > tr > td {
-          padding: 8px 8px !important;
-          border-bottom: 1px solid #f1f5f9 !important;
-        }
-        .custom-matrix-table .ant-table-tbody > tr:hover > td {
-          background: #f8fafc !important;
-        }
-      `}</style>
+      {/* Modal DAC Engine */}
+      <ResourceShareModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        resourceType="SOCIAL_POST"
+        resourceId="1"
+        resourceTitle="Chiến dịch TikTok Viral Summer 2026 (Bài đăng ID #1)"
+      />
     </div>
   );
 }
+

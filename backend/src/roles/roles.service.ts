@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { TogglePermissionDto } from './dto/toggle-permission.dto.js';
-import { BatchUpdateRolePermissionsDto } from './dto/batch-update-permissions.dto.js';
 
 const prisma = new PrismaClient();
+
+const PROTECTED_ROLES = ['Super Admin', 'Manager', 'Leader', 'Employee', 'Intern'];
 
 @Injectable()
 export class RolesService {
@@ -27,8 +28,106 @@ export class RolesService {
       description: r.description,
       usersCount: r._count.users,
       permissionsCount: r._count.permissions,
+      isProtected: PROTECTED_ROLES.includes(r.name),
       createdAt: r.createdAt,
     }));
+  }
+
+  async createRole(dto: { name: string; description?: string }) {
+    if (!dto.name || !dto.name.trim()) {
+      throw new BadRequestException('Tên vai trò không được để trống!');
+    }
+
+    const existing = await prisma.role.findFirst({
+      where: { name: dto.name.trim(), deletedAt: null },
+    });
+    if (existing) {
+      throw new BadRequestException(`Vai trò "${dto.name}" đã tồn tại trên hệ thống!`);
+    }
+
+    const newRole = await prisma.role.create({
+      data: {
+        name: dto.name.trim(),
+        description: dto.description || null,
+      },
+    });
+
+    // Ghi log bảo mật
+    await prisma.securityAuditLog.create({
+      data: {
+        action: 'ROLE_CREATE',
+        details: `Tạo thành công vai trò tùy chỉnh mới: "${newRole.name}" (ID #${newRole.id})`,
+      },
+    });
+
+    return newRole;
+  }
+
+  async updateRole(id: number, dto: { name?: string; description?: string }) {
+    const role = await prisma.role.findUnique({ where: { id } });
+    if (!role) {
+      throw new NotFoundException('Vai trò không tồn tại!');
+    }
+
+    if (PROTECTED_ROLES.includes(role.name) && dto.name && dto.name !== role.name) {
+      throw new BadRequestException(`Không được thay đổi tên của vai trò hệ thống bảo vệ "${role.name}"`);
+    }
+
+    const updated = await prisma.role.update({
+      where: { id },
+      data: {
+        name: dto.name ? dto.name.trim() : role.name,
+        description: dto.description !== undefined ? dto.description : role.description,
+      },
+    });
+
+    // Ghi log bảo mật
+    await prisma.securityAuditLog.create({
+      data: {
+        action: 'ROLE_UPDATE',
+        details: `Cập nhật thông tin vai trò: "${updated.name}" (ID #${updated.id})`,
+      },
+    });
+
+    return updated;
+  }
+
+  async deleteRole(id: number) {
+    const role = await prisma.role.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { users: { where: { deletedAt: null } } },
+        },
+      },
+    });
+
+    if (!role) {
+      throw new NotFoundException('Vai trò không tồn tại!');
+    }
+
+    if (PROTECTED_ROLES.includes(role.name)) {
+      throw new BadRequestException(`Vai trò hệ thống "${role.name}" được bảo vệ vĩnh viễn, không thể xóa!`);
+    }
+
+    if (role._count.users > 0) {
+      throw new BadRequestException(`Không thể xóa vai trò "${role.name}" vì đang có ${role._count.users} nhân sự gắn vai trò này!`);
+    }
+
+    await prisma.role.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    // Ghi log bảo mật
+    await prisma.securityAuditLog.create({
+      data: {
+        action: 'ROLE_DELETE',
+        details: `Xóa vai trò tùy chỉnh: "${role.name}" (ID #${role.id})`,
+      },
+    });
+
+    return { message: `Đã xóa thành công vai trò "${role.name}"` };
   }
 
   async getMatrix() {
@@ -56,6 +155,7 @@ export class RolesService {
           roleId: true,
           moduleId: true,
           action: true,
+          scope: true,
         },
       }),
     ]);
@@ -65,6 +165,7 @@ export class RolesService {
         id: r.id,
         name: r.name,
         description: r.description,
+        isProtected: PROTECTED_ROLES.includes(r.name),
         usersCount: r._count.users,
       })),
       modules: modules.map((m) => ({
@@ -103,6 +204,7 @@ export class RolesService {
 
     return {
       ...role,
+      isProtected: PROTECTED_ROLES.includes(role.name),
       users: role.users.map((u) => ({
         id: u.id,
         name: u.name,
@@ -113,7 +215,7 @@ export class RolesService {
     };
   }
 
-  async togglePermission(dto: TogglePermissionDto) {
+  async togglePermission(dto: TogglePermissionDto & { scope?: any }) {
     const role = await prisma.role.findUnique({
       where: { id: dto.roleId },
     });
@@ -138,29 +240,43 @@ export class RolesService {
     });
 
     if (existing) {
-      await prisma.permission.delete({
-        where: { id: existing.id },
-      });
-      return {
-        granted: false,
-        message: `Đã thu hồi quyền ${dto.action} của vai trò ${role.name}`,
-      };
+      if (dto.scope && existing.scope !== dto.scope) {
+        await prisma.permission.update({
+          where: { id: existing.id },
+          data: { scope: dto.scope },
+        });
+        return {
+          granted: true,
+          scope: dto.scope,
+          message: `Đã cập nhật phạm vi ${dto.scope} cho quyền ${dto.action} của vai trò ${role.name}`,
+        };
+      } else {
+        await prisma.permission.delete({
+          where: { id: existing.id },
+        });
+        return {
+          granted: false,
+          message: `Đã thu hồi quyền ${dto.action} của vai trò ${role.name}`,
+        };
+      }
     } else {
       await prisma.permission.create({
         data: {
           roleId: dto.roleId,
           moduleId: dto.moduleId,
           action: dto.action,
+          scope: dto.scope || 'PERSONAL',
         },
       });
       return {
         granted: true,
-        message: `Đã cấp quyền ${dto.action} cho vai trò ${role.name}`,
+        scope: dto.scope || 'PERSONAL',
+        message: `Đã cấp quyền ${dto.action} (${dto.scope || 'PERSONAL'}) cho vai trò ${role.name}`,
       };
     }
   }
 
-  async batchUpdateRolePermissions(dto: BatchUpdateRolePermissionsDto) {
+  async batchUpdateRolePermissions(dto: any) {
     const role = await prisma.role.findUnique({
       where: { id: dto.roleId },
     });
@@ -176,21 +292,28 @@ export class RolesService {
     }
 
     await prisma.$transaction(async (tx) => {
-      // Xóa các quyền hiện tại của Role này
       await tx.permission.deleteMany({
         where: { roleId: dto.roleId },
       });
 
-      // Tạo mới danh sách quyền được chọn
       if (dto.permissions && dto.permissions.length > 0) {
         await tx.permission.createMany({
-          data: dto.permissions.map((p) => ({
+          data: dto.permissions.map((p: any) => ({
             roleId: dto.roleId,
             moduleId: p.moduleId,
             action: p.action,
+            scope: p.scope || 'PERSONAL',
           })),
         });
       }
+    });
+
+    // Ghi log bảo mật
+    await prisma.securityAuditLog.create({
+      data: {
+        action: 'MATRIX_UPDATE',
+        details: `Cập nhật ma trận phân quyền & Scope cho vai trò: "${role.name}" (${dto.permissions?.length || 0} quyền được cấp)`,
+      },
     });
 
     return {
@@ -199,3 +322,4 @@ export class RolesService {
     };
   }
 }
+
