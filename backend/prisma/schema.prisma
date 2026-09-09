@@ -26,6 +26,8 @@ model User {
   permissions  Permission[]
   transferLogs DepartmentTransferLog[] @relation("UserTransferLogs")
   notifications Notification[]
+  authorPosts   Post[]                   @relation("AuthorPosts")
+  approvedPosts Post[]                   @relation("ApprovedPosts")
   createdAt    DateTime                @default(now())
   updatedAt    DateTime     @updatedAt
   deletedAt    DateTime?
@@ -167,4 +169,36 @@ model Notification {
 
   @@index([userId, read])
 }
+
+enum PostStatus {
+  DRAFT
+  PENDING_APPROVE
+  APPROVED
+  REJECTED
+  PUBLISHED
+}
+
+model Post {
+  id           Int        @id @default(autoincrement())
+  title        String
+  content      String     @db.LongText
+  platforms    String     // JSON array or string e.g. '["FACEBOOK","TIKTOK"]'
+  status       PostStatus @default(DRAFT)
+  scheduledAt  DateTime?
+  publishedAt  DateTime?
+  rejectReason String?    @db.Text
+  authorId     Int
+  author       User       @relation("AuthorPosts", fields: [authorId], references: [id])
+  approvedById Int?
+  approvedBy   User?      @relation("ApprovedPosts", fields: [approvedById], references: [id])
+  mediaUrls    String?    @db.LongText
+  hashtags     String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+
+  @@index([authorId, status])
+  @@index([scheduledAt])
+}
+
 

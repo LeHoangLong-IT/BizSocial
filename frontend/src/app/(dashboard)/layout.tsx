@@ -13,6 +13,7 @@ import {
   TeamOutlined,
   MenuOutlined,
   CloseOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
@@ -145,6 +146,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           key: '/',
           icon: <DashboardOutlined />,
           label: 'Dashboard',
+        },
+        {
+          key: '/content-calendar',
+          icon: <CalendarOutlined />,
+          label: 'Lịch Bài Đăng Social',
         },
         canReadModule('User')
           ? {
